@@ -1,0 +1,6 @@
+_build/
+.merlin
+.opam-switch/
+*.install
+*.dune-package
+.DS_Store
