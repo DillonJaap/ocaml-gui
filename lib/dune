@@ -1,0 +1,4 @@
+(library
+ (name gui)
+ (libraries core)
+ (modules levenshtein))

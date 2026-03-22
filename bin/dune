@@ -1,0 +1,6 @@
+(executable
+ (public_name gui)
+ (name main)
+ (libraries gui core raylib core_unix)
+ (preprocess
+  (pps ppx_deriving.show)))
