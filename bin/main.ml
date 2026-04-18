@@ -1,26 +1,7 @@
 open Raylib
+open Raygui
 open Gui
-
-let readdir_option dir_handle =
-  match Unix.readdir dir_handle with
-  | str -> Some str
-  | exception End_of_file -> None
-;;
-
-(* util *)
-let ls dir =
-  let dir_handle = Unix.opendir dir in
-  let _ = Printf.sprintf "hello you are %s" "dillon" in
-
-  let rec loop files =
-    match readdir_option dir_handle with
-    (* ignore relative directories *)
-    | Some file when file = "." || file = ".." -> loop files
-    | Some file -> loop (file :: files)
-    | None -> files
-  in
-  loop []
-;;
+open Os_util
 
 let calculate_edit_ratios input_text files =
   List.map (fun elt -> elt, Levenshtein.ratio input_text elt) files
@@ -63,8 +44,17 @@ let draw_files files =
 ;;
 
 let draw_content files =
+  begin_drawing ();
   clear_background Color.darkgray;
-  draw_files files
+
+  (* text box *)
+  let rect = Rectangle.create 5.0 5.0 50.0 500.0 in
+  let _ = text_box rect "this is a test" true in
+
+  (* file list *)
+  draw_files files;
+
+  end_drawing ()
 ;;
 
 let raylib_loop files =
@@ -72,11 +62,8 @@ let raylib_loop files =
     if window_should_close () then
       close_window ()
     else
-      let open Raylib in
-      begin_drawing ();
       draw_content files;
-      end_drawing ();
-      loop ()
+    loop ()
   in
   loop ()
 ;;

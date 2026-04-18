@@ -3,4 +3,4 @@ margin = 80
 sequence-blank-line=preserve-one
 exp-grouping=preserve
 if-then-else=fit-or-vertical
-
+#let-binding-spacing=sparse

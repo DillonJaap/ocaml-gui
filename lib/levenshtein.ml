@@ -12,15 +12,18 @@ let min_int list =
 let ratio from_text to_text =
   let from_bytes = Bytes.of_string from_text in
   let to_bytes = Bytes.of_string to_text in
+
   let tabulated_matrix =
     Array.make_matrix
       ~dimx:(Bytes.length from_bytes + 1)
       ~dimy:(Bytes.length to_bytes + 1)
       0
   in
+
   (* initialize 1..(length) values in first row and column *)
   Array.iteri tabulated_matrix ~f:(fun i _ -> tabulated_matrix.(i).(0) <- i);
   Array.iteri tabulated_matrix.(0) ~f:(fun i _ -> tabulated_matrix.(0).(i) <- i);
+
   for i = 1 to Array.length tabulated_matrix - 1 do
     for j = 1 to Array.length tabulated_matrix.(0) - 1 do
       let res =
@@ -36,9 +39,11 @@ let ratio from_text to_text =
       tabulated_matrix.(i).(j) <- res
     done
   done;
+
   let edit_distance =
     tabulated_matrix.(Bytes.length from_bytes).(Bytes.length to_bytes)
   in
+
   let sum_of_lengths = Bytes.length from_bytes + Bytes.length to_bytes in
   float_of_int (sum_of_lengths - edit_distance) /. float_of_int sum_of_lengths
 ;;
