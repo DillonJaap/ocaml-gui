@@ -9,9 +9,14 @@ let min_int list =
       if cur < acc then cur else acc)
 ;;
 
-let ratio from_text to_text =
-  let from_bytes = Bytes.of_string from_text in
-  let to_bytes = Bytes.of_string to_text in
+let ratio ?(case_sensitive = false) from_text to_text =
+  let from_bytes, to_bytes =
+    if case_sensitive then
+      from_text |> Bytes.of_string, to_text |> Bytes.of_string
+    else
+      ( from_text |> String.lowercase |> Bytes.of_string
+      , to_text |> String.lowercase |> Bytes.of_string )
+  in
 
   let tabulated_matrix =
     Array.make_matrix
