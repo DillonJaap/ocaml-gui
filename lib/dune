@@ -1,4 +1,4 @@
 (library
  (name gui)
- (libraries core unix)
+ (libraries core)
  (modules levenshtein os_util))

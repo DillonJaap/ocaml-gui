@@ -1,12 +1,11 @@
-open Raylib
-open Raygui
 open Gui
+open Core
 
 let calculate_edit_ratios input_text file_paths =
   file_paths
-  |> List.map begin fun elt ->
+  |> List.map ~f:begin fun elt ->
       (* only test against the last folder name and not the full path *)
-      let file_name = elt |> String.split_on_char '/' |> List.rev |> List.hd in
+      let file_name = elt |> String.split ~on:'/' |> List.rev |> List.hd_exn in
       elt, Levenshtein.ratio input_text file_name
     end
 ;;
@@ -16,51 +15,47 @@ let draw_files files x_offset y_offset current_selection =
 
   (* get the max width *)
   let max_width =
-    List.fold_left
-      begin fun acc a ->
-        let text_width = measure_text (fst a) font_size in
+    List.fold files ~init:0 ~f:begin fun acc a ->
+        let text_width = Raylib.measure_text (fst a) font_size in
         if text_width > acc then text_width else acc
       end
-      0
-      files
   in
 
-  let x_offset = x_offset + (get_screen_width () / 2) - (max_width / 2) in
+  let x_offset =
+    x_offset + (Raylib.get_screen_width () / 2) - (max_width / 2)
+  in
 
   (* draw the file names*)
-  List.iteri
-    begin fun i elt ->
+  List.iteri files ~f:begin fun i elt ->
       (* draw selected element *)
       if i = current_selection then
-        draw_rectangle
+        Raylib.draw_rectangle
           x_offset
           (y_offset + 25 + (i * 25))
           max_width
           25
-          Color.blue
+          Raylib.Color.blue
       else
         ();
 
-      draw_text
+      (* drow the file name *)
+      Raylib.draw_text
         (fst elt)
         x_offset
         (y_offset + 25 + (i * 25))
         font_size
-        Color.gold
-    end
-    files;
+        Raylib.Color.gold
+    end;
 
   (* draw the Levenshtein ratio *)
-  List.iteri
-    begin fun i elt ->
-      draw_text
+    List.iteri files ~f:begin fun i elt ->
+      Raylib.draw_text
         (string_of_float (snd elt))
         (x_offset + max_width + 20)
         (y_offset + 25 + (i * 25))
         font_size
-        Color.gold
+        Raylib.Color.gold
     end
-    files
 ;;
 
 (** [pad_input ~max_len s] pads [s] with null bytes up to [max_len] before
@@ -73,18 +68,18 @@ let pad_input ?(max_len = 256) s =
 ;;
 
 let draw_content files input_text current_selection =
-  begin_drawing ();
-  clear_background Color.darkgray;
+  Raylib.begin_drawing ();
+  Raylib.clear_background Raylib.Color.darkgray;
 
   (* text box *)
-  let x = (get_screen_width () / 2) - (500 / 2) |> float_of_int in
-  let rect = Rectangle.create x 5.0 500.0 70.0 in
-  let new_text, _ = text_box rect (pad_input input_text) true in
+  let x = (Raylib.get_screen_width () / 2) - (500 / 2) |> float_of_int in
+  let rect = Raylib.Rectangle.create x 5.0 500.0 70.0 in
+  let new_text, _ = Raygui.text_box rect (pad_input input_text) true in
 
   (* file list *)
   draw_files files 0 60 current_selection;
 
-  end_drawing ();
+  Raylib.end_drawing ();
   new_text
 ;;
 
@@ -93,28 +88,37 @@ let raylib_loop () =
   let current_selection = ref 0 in
 
   (* Set text size to 24px for ALL controls *)
-  set_style (Control.Default `Text_size) 28;
-  let files = Os_util.find_git_dirs "/home/dillon/code" in
+  Raygui.set_style (Raygui.Control.Default `Text_size) 28;
+  let dirs = Os_util.find_git_dirs "/home/dillon/code" in
+  let num_files = List.length dirs in
 
   let rec loop () =
-    if window_should_close () then
-      close_window ()
+    if Raylib.window_should_close () then
+      Raylib.close_window ()
     else begin
-      let file_ratio_tuples =
-        files
+      let dir_ratio_tuples =
+        dirs
         |> calculate_edit_ratios !input_text
-        |> List.sort (fun a b -> Float.compare (snd b) (snd a))
+        |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
       in
 
-      if is_key_pressed Key.Down then (* TODO limit to list length *)
-        current_selection := min (!current_selection + 1) 7
-      else if is_key_pressed Key.Up then
+      if Raylib.is_key_pressed Raylib.Key.Down then
+        current_selection := min (!current_selection + 1) (num_files - 1)
+      else if Raylib.is_key_pressed Raylib.Key.Up then
         current_selection := max (!current_selection - 1) 0
+      else if Raylib.is_key_pressed Raylib.Key.Enter then begin
+        let _pid =
+          Spawn.spawn
+            ~prog:"/usr/bin/kitty"
+            ~argv:[ "--directory"; List.nth_exn dirs !current_selection ]
+            ()
+        in
+        Raylib.close_window ()
+      end
       else
         ();
 
-      input_text
-      := draw_content file_ratio_tuples !input_text !current_selection;
+      input_text := draw_content dir_ratio_tuples !input_text !current_selection;
       loop ()
     end
   in
@@ -122,8 +126,8 @@ let raylib_loop () =
 ;;
 
 let setup () =
-  init_window 1200 700 "raylib [core] example - basic window";
-  set_target_fps 60
+  Raylib.init_window 1200 700 "raylib [core] example - basic window";
+  Raylib.set_target_fps 60
 ;;
 
 let () =

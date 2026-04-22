@@ -25,6 +25,7 @@
   core_unix
   raylib
   raygui
+  spawn
   (ocaml-lsp-server :dev)
   (merlin :dev)
   (ocamlformat :dev)

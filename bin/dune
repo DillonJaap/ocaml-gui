@@ -1,6 +1,6 @@
 (executable
  (public_name gui)
  (name main)
- (libraries gui core raylib raygui core_unix)
+ (libraries gui core raylib raygui core_unix spawn)
  (preprocess
   (pps ppx_deriving.show)))

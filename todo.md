@@ -5,6 +5,11 @@
 - [ ] making a selection opens kitty
 - [ ] be able to select the option with arrow keys + enter
 - [ ] update to use Janestreet Core instead of the stdlib
+- [ ] open a kitty window in the selected directory
+    - [ ] optionally open a kitty tab?
+- [ ] pass in the starting code directory as a command line flag
+- [ ] close after selection
+- [ ] create an executable and create a hot key to run the script
 
 # Big Ideas
 ## make a text editor box
@@ -24,3 +29,6 @@
 
 ## Full on text editor
 - logseq like?
+
+## libs/tech
+- use [eio](https://github.com/ocaml-multicore/eio) of operation system IO
