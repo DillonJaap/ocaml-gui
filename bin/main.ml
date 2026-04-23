@@ -21,9 +21,7 @@ let draw_files files x_offset y_offset current_selection =
       end
   in
 
-  let x_offset =
-    x_offset + (Raylib.get_screen_width () / 2) - (max_width / 2)
-  in
+  let x_offset = x_offset + ((Raylib.get_screen_width () - max_width) / 2) in
 
   (* draw the file names*)
   List.iteri files ~f:begin fun i elt ->
@@ -72,7 +70,7 @@ let draw_content files input_text current_selection =
   Raylib.clear_background Raylib.Color.darkgray;
 
   (* text box *)
-  let x = (Raylib.get_screen_width () / 2) - (500 / 2) |> float_of_int in
+  let x = (Raylib.get_screen_width () - 500) / 2 |> float_of_int in
   let rect = Raylib.Rectangle.create x 5.0 500.0 70.0 in
   let new_text, _ = Raygui.text_box rect (pad_input input_text) true in
 
@@ -93,27 +91,30 @@ let raylib_loop () =
   let num_files = List.length dirs in
 
   let rec loop () =
-    if Raylib.window_should_close () then
-      Raylib.close_window ()
-    else begin
+    (* close window and exit loop *)
+    if not (Raylib.window_should_close ()) then begin
       let dir_ratio_tuples =
         dirs
         |> calculate_edit_ratios !input_text
         |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
       in
 
+      (* handle keypresses *)
       if Raylib.is_key_pressed Raylib.Key.Down then
         current_selection := min (!current_selection + 1) (num_files - 1)
       else if Raylib.is_key_pressed Raylib.Key.Up then
         current_selection := max (!current_selection - 1) 0
       else if Raylib.is_key_pressed Raylib.Key.Enter then begin
-        let _pid =
-          Spawn.spawn
-            ~prog:"/usr/bin/kitty"
-            ~argv:[ "--directory"; List.nth_exn dirs !current_selection ]
-            ()
-        in
-        Raylib.close_window ()
+        Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore;
+        Os_util.daemonize
+          ~prog:"/usr/bin/kitty"
+          ~argv:
+            [| "kitty"
+             ; "--directory"
+             ; List.nth_exn dir_ratio_tuples !current_selection |> fst
+            |];
+        Raylib.close_window ();
+        exit 0
       end
       else
         ();
@@ -121,12 +122,26 @@ let raylib_loop () =
       input_text := draw_content dir_ratio_tuples !input_text !current_selection;
       loop ()
     end
+    (* raylib window should close *)
+    else begin
+      Raylib.close_window ();
+      exit 0
+    end
   in
   loop ()
 ;;
 
 let setup () =
-  Raylib.init_window 1200 700 "raylib [core] example - basic window";
+  let window_width = 1200 in
+  let window_height = 800 in
+
+  Raylib.init_window window_width window_height "Project Launcher";
+
+  (* center the window *)
+  Raylib.set_window_position
+    ((Raylib.get_screen_width () - window_width) / 2)
+    ((Raylib.get_screen_height () - window_height) / 2);
+
   Raylib.set_target_fps 60
 ;;
 

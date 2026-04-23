@@ -2,14 +2,20 @@
 - [x] be able to type in an input box
 - [x] upon text change the options dynamically update
 - [x] selections are searched by looking for git directories
-- [ ] making a selection opens kitty
-- [ ] be able to select the option with arrow keys + enter
-- [ ] update to use Janestreet Core instead of the stdlib
-- [ ] open a kitty window in the selected directory
+- [x] making a selection opens kitty
+- [x] be able to select the option with arrow keys + enter
+- [x] update to use Janestreet Core instead of the stdlib
+- [x] open a kitty window in the selected directory
     - [ ] optionally open a kitty tab?
 - [ ] pass in the starting code directory as a command line flag
-- [ ] close after selection
-- [ ] create an executable and create a hot key to run the script
+- [x] close after selection
+- [x] create an executable and create a hot key to run the script
+- [ ] optimized fuzzy search accuraciy
+
+# glitches
+- [x] sorting doesn't change actual selection
+- [x] app should close when user selects option
+- [ ] app should only calc on page change
 
 # Big Ideas
 ## make a text editor box
@@ -32,3 +38,5 @@
 
 ## libs/tech
 - use [eio](https://github.com/ocaml-multicore/eio) of operation system IO
+
+
