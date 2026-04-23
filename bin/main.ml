@@ -82,24 +82,25 @@ let draw_content files input_text current_selection =
 ;;
 
 let raylib_loop () =
+  (* Set text size to 24px for ALL controls *)
+  Raygui.set_style (Raygui.Control.Default `Text_size) 28;
+
+  let calculate_scores dirs input_text =
+    dirs
+    |> calculate_edit_ratios input_text
+    |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
+  in
+
   let input_text = ref "" in
   let current_selection = ref 0 in
 
-  (* Set text size to 24px for ALL controls *)
-  Raygui.set_style (Raygui.Control.Default `Text_size) 28;
   let dirs = Os_util.find_git_dirs "/home/dillon/code" in
   let num_files = List.length dirs in
+  let dir_ratio_tuples = ref (calculate_scores dirs !input_text) in
 
   let rec loop () =
     (* close window and exit loop *)
-    if not (Raylib.window_should_close ()) then begin
-      let dir_ratio_tuples =
-        dirs
-        |> calculate_edit_ratios !input_text
-        |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
-      in
-
-      (* handle keypresses *)
+    if not (Raylib.window_should_close ()) then begin (* handle keypresses *)
       if Raylib.is_key_pressed Raylib.Key.Down then
         current_selection := min (!current_selection + 1) (num_files - 1)
       else if Raylib.is_key_pressed Raylib.Key.Up then
@@ -111,7 +112,7 @@ let raylib_loop () =
           ~argv:
             [| "kitty"
              ; "--directory"
-             ; List.nth_exn dir_ratio_tuples !current_selection |> fst
+             ; List.nth_exn !dir_ratio_tuples !current_selection |> fst
             |];
         Raylib.close_window ();
         exit 0
@@ -119,7 +120,16 @@ let raylib_loop () =
       else
         ();
 
-      input_text := draw_content dir_ratio_tuples !input_text !current_selection;
+      let new_text =
+        draw_content !dir_ratio_tuples !input_text !current_selection
+      in
+
+      if not (phys_equal new_text !input_text) then begin
+        input_text := new_text;
+        dir_ratio_tuples := calculate_scores dirs !input_text
+      end
+      else
+        ();
       loop ()
     end
     (* raylib window should close *)
