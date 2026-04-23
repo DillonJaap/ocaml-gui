@@ -1,0 +1,19 @@
+(version 1.6.0)
+
+(build
+ (all_platforms
+  ((action
+    (progn
+     (when %{pkg-self:dev} (run dune subst))
+     (run dune build -p %{pkg-self:name} -j %{jobs} @install))))))
+
+(depends
+ (all_platforms
+  (dune raylib)))
+
+(source
+ (fetch
+  (url
+   https://github.com/tjammer/raylib-ocaml/releases/download/1.6.0/raylib-1.6.0.tbz)
+  (checksum
+   sha256=c11eb4adbd5823e88da7081e08cfc5a3bb6e8eff742d1238833ebacff5f6ba43)))

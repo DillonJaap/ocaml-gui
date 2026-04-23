@@ -1,0 +1,19 @@
+(version 3.1.0)
+
+(build
+ (all_platforms
+  ((action
+    (progn
+     (when %{pkg-self:dev} (run dune subst))
+     (run dune build -p %{pkg-self:name} -j %{jobs}))))))
+
+(depends
+ (all_platforms
+  (ocaml dune)))
+
+(source
+ (fetch
+  (url
+   https://github.com/hannesm/patch/releases/download/v3.1.0/patch-3.1.0.tbz)
+  (checksum
+   sha256=63d9e820295dd257f32efbfde171f1bc940c0c83aae1ed5a501bb57970d52294)))
