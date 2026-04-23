@@ -6,7 +6,7 @@
 - [x] be able to select the option with arrow keys + enter
 - [x] update to use Janestreet Core instead of the stdlib
 - [x] open a kitty window in the selected directory
-    - [ ] optionally open a kitty tab?
+    - [x] optionally open a kitty tab?
 - [ ] pass in the starting code directory as a command line flag
 - [x] close after selection
 - [x] create an executable and create a hot key to run the script
@@ -16,6 +16,7 @@
     - [ ] os specific / fallbacks
     - [ ] optionally can be json
 - [ ] create a log file (somewhere?)
+- [ ] use socket to open kitty tab (should account for -pid suffix on file name)
 
 # glitches
 - [x] sorting doesn't change actual selection
