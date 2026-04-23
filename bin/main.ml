@@ -103,7 +103,7 @@ let raylib_loop () =
     if not (Raylib.window_should_close ()) then begin
       (* handle keypresses *)
         let open Raylib.Key in
-        match Raylib.get_key_pressed () with
+        begin match Raylib.get_key_pressed () with
         | Down ->
           current_selection := min (!current_selection + 1) (num_files - 1)
         | Up -> current_selection := max (!current_selection - 1) 0
@@ -118,19 +118,21 @@ let raylib_loop () =
               |];
           Raylib.close_window ();
           exit 0
-        | _ ->
+        | _ -> ()
+        end;
+
+        (* get new input from text box *)
+        let new_text =
+          draw_content !dir_ratio_tuples !input_text !current_selection
+        in
+
+        (* only calculate scores if text changed *)
+        if not (phys_equal new_text !input_text) then (
+          input_text := new_text;
+          dir_ratio_tuples := calculate_scores dirs !input_text)
+        else
           ();
-
-          let new_text =
-            draw_content !dir_ratio_tuples !input_text !current_selection
-          in
-
-          if not (phys_equal new_text !input_text) then (
-            input_text := new_text;
-            dir_ratio_tuples := calculate_scores dirs !input_text)
-          else
-            ();
-          loop ()
+        loop ()
     end
     (* raylib window should close *)
     else begin
