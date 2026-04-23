@@ -10,12 +10,16 @@
 - [ ] pass in the starting code directory as a command line flag
 - [x] close after selection
 - [x] create an executable and create a hot key to run the script
-- [ ] optimized fuzzy search accuraciy
+- [ ] optimized fuzzy search accuracy
+- [ ] sexp config file in ~/.config/project-manager
+    - [ ] asks user for values if none are set
+    - [ ] os specific / fallbacks
+    - [ ] optionally can be json
 
 # glitches
 - [x] sorting doesn't change actual selection
 - [x] app should close when user selects option
-- [ ] app should only calc on page change
+- [ ] app should only calc on input change
 
 # Big Ideas
 ## make a text editor box

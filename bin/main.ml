@@ -11,7 +11,7 @@ let calculate_edit_ratios input_text file_paths =
 ;;
 
 let draw_files files x_offset y_offset current_selection =
-  let font_size = 28 in
+  let font_size = 18 in
 
   (* get the max width *)
   let max_width =
@@ -85,9 +85,35 @@ let raylib_loop () =
   let input_text = ref "" in
   let current_selection = ref 0 in
 
-  (* Set text size to 24px for ALL controls *)
-  Raygui.set_style (Raygui.Control.Default `Text_size) 28;
-  let dirs = Os_util.find_git_dirs "/home/dillon/code" in
+  let mac_dir = "/Users/DJaap/code" in
+  let linux_dir = "/home/dillon/code" in
+
+  let code_dir =
+    if Stdlib.Sys.file_exists linux_dir && Stdlib.Sys.is_directory linux_dir
+    then
+      "home/dillon/code"
+    else if Stdlib.Sys.file_exists mac_dir && Stdlib.Sys.is_directory mac_dir
+    then
+      "/Users/DJaap/code"
+    else
+      failwith
+      @@ Printf.sprintf
+           "no such directories, \"%s\" or \"%s\""
+           linux_dir
+           mac_dir
+  in
+
+  let kitty_exec_path =
+    if Stdlib.Sys.file_exists linux_dir then
+      "/usr/bin/kitty"
+    else if Stdlib.Sys.file_exists mac_dir then
+      "/Applications/kitty.app/Contents/MacOS/kitty"
+    else
+      failwith
+      @@ Printf.sprintf "no such execs, \"%s\" or \"%s\"" linux_dir mac_dir
+  in
+
+  let dirs = Os_util.find_git_dirs code_dir in
   let num_files = List.length dirs in
 
   let rec loop () =
@@ -105,9 +131,8 @@ let raylib_loop () =
       else if Raylib.is_key_pressed Raylib.Key.Up then
         current_selection := max (!current_selection - 1) 0
       else if Raylib.is_key_pressed Raylib.Key.Enter then begin
-        Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore;
         Os_util.daemonize
-          ~prog:"/usr/bin/kitty"
+          ~prog:kitty_exec_path
           ~argv:
             [| "kitty"
              ; "--directory"
@@ -137,12 +162,19 @@ let setup () =
 
   Raylib.init_window window_width window_height "Project Launcher";
 
-  (* center the window *)
+  (* theoretically center the window *)
   Raylib.set_window_position
     ((Raylib.get_screen_width () - window_width) / 2)
     ((Raylib.get_screen_height () - window_height) / 2);
 
-  Raylib.set_target_fps 60
+  (* target FPS *)
+  Raylib.set_target_fps 60;
+
+  (* Set text size to 24px for ALL controls *)
+  Raygui.set_style (Raygui.Control.Default `Text_size) 18;
+
+  (* remove window decoration *)
+  Raylib.set_window_state [ Raylib.ConfigFlags.Window_undecorated ]
 ;;
 
 let () =
