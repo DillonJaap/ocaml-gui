@@ -82,69 +82,96 @@ let draw_content files input_text current_selection =
 ;;
 
 let raylib_loop () =
+  (* Set text size to 24px for ALL controls *)
+  Raygui.set_style (Raygui.Control.Default `Text_size) 28;
+
+  let calculate_scores dirs input_text =
+    dirs
+    |> calculate_edit_ratios input_text
+    |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
+  in
+
   let input_text = ref "" in
   let current_selection = ref 0 in
 
-  let mac_dir = "/Users/DJaap/code" in
-  let linux_dir = "/home/dillon/code" in
+  let mac_home = "/Users/DJaap" in
+  let linux_home = "/home/dillon" in
 
-  let code_dir =
-    if Stdlib.Sys.file_exists linux_dir && Stdlib.Sys.is_directory linux_dir
+  let home_dir =
+    if Stdlib.Sys.file_exists linux_home && Stdlib.Sys.is_directory linux_home
     then
-      "home/dillon/code"
-    else if Stdlib.Sys.file_exists mac_dir && Stdlib.Sys.is_directory mac_dir
+      linux_home
+    else if Stdlib.Sys.file_exists mac_home && Stdlib.Sys.is_directory mac_home
     then
-      "/Users/DJaap/code"
+      mac_home
     else
       failwith
       @@ Printf.sprintf
            "no such directories, \"%s\" or \"%s\""
-           linux_dir
-           mac_dir
+           linux_home
+           mac_home
   in
+  let code_dir = home_dir ^ "/code" in
 
   let kitty_exec_path =
-    if Stdlib.Sys.file_exists linux_dir then
+    if Stdlib.Sys.file_exists linux_home then
       "/usr/bin/kitty"
-    else if Stdlib.Sys.file_exists mac_dir then
+    else if Stdlib.Sys.file_exists mac_home then
       "/Applications/kitty.app/Contents/MacOS/kitty"
     else
       failwith
-      @@ Printf.sprintf "no such execs, \"%s\" or \"%s\"" linux_dir mac_dir
+      @@ Printf.sprintf "no such execs, \"%s\" or \"%s\"" linux_home mac_home
   in
 
   let dirs = Os_util.find_git_dirs code_dir in
   let num_files = List.length dirs in
+  let dir_ratio_tuples = ref (calculate_scores dirs !input_text) in
 
   let rec loop () =
     (* close window and exit loop *)
-    if not (Raylib.window_should_close ()) then begin
-      let dir_ratio_tuples =
-        dirs
-        |> calculate_edit_ratios !input_text
-        |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
-      in
-
-      (* handle keypresses *)
-      if Raylib.is_key_pressed Raylib.Key.Down then
-        current_selection := min (!current_selection + 1) (num_files - 1)
-      else if Raylib.is_key_pressed Raylib.Key.Up then
-        current_selection := max (!current_selection - 1) 0
-      else if Raylib.is_key_pressed Raylib.Key.Enter then begin
+    if not (Raylib.window_should_close ()) then begin (* handle keypresses *)
+      let open Raylib.Key in
+      begin match Raylib.get_key_pressed () with
+      | Down -> current_selection := min (!current_selection + 1) (num_files - 1)
+      | Up -> current_selection := max (!current_selection - 1) 0
+      (* open kitty window in selected directory *)
+      | Enter ->
+        (* Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore; *)
+        let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
         Os_util.daemonize
           ~prog:kitty_exec_path
-          ~argv:
-            [| "kitty"
-             ; "--directory"
-             ; List.nth_exn dir_ratio_tuples !current_selection |> fst
-            |];
+          ~argv:[| "kitty"; "--directory"; dir |];
         Raylib.close_window ();
         exit 0
-      end
+      (* open kitty tab in selected directory *)
+      | Tab ->
+        let _ =
+          let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
+          let file_name =
+            dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
+          in
+          Stdlib.Sys.command
+          @@ Printf.sprintf
+               "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
+               file_name
+               dir
+        in
+        Raylib.close_window ();
+        exit 0
+      | _ -> ()
+      end;
+
+      (* get new input from text box *)
+      let new_text =
+        draw_content !dir_ratio_tuples !input_text !current_selection
+      in
+
+      (* only calculate scores if text changed *)
+      if not (phys_equal new_text !input_text) then (
+        input_text := new_text;
+        dir_ratio_tuples := calculate_scores dirs !input_text)
       else
         ();
-
-      input_text := draw_content dir_ratio_tuples !input_text !current_selection;
       loop ()
     end
     (* raylib window should close *)

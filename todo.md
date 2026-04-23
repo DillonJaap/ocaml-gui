@@ -15,6 +15,7 @@
     - [ ] asks user for values if none are set
     - [ ] os specific / fallbacks
     - [ ] optionally can be json
+- [ ] create a log file (somewhere?)
 
 # glitches
 - [x] sorting doesn't change actual selection
