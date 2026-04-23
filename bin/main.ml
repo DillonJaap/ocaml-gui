@@ -100,37 +100,37 @@ let raylib_loop () =
 
   let rec loop () =
     (* close window and exit loop *)
-    if not (Raylib.window_should_close ()) then begin (* handle keypresses *)
-      if Raylib.is_key_pressed Raylib.Key.Down then
-        current_selection := min (!current_selection + 1) (num_files - 1)
-      else if Raylib.is_key_pressed Raylib.Key.Up then
-        current_selection := max (!current_selection - 1) 0
-      else if Raylib.is_key_pressed Raylib.Key.Enter then begin
-        Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore;
-        Os_util.daemonize
-          ~prog:"/usr/bin/kitty"
-          ~argv:
-            [| "kitty"
-             ; "--directory"
-             ; List.nth_exn !dir_ratio_tuples !current_selection |> fst
-            |];
-        Raylib.close_window ();
-        exit 0
-      end
-      else
-        ();
+    if not (Raylib.window_should_close ()) then begin
+      (* handle keypresses *)
+        let open Raylib.Key in
+        match Raylib.get_key_pressed () with
+        | Down ->
+          current_selection := min (!current_selection + 1) (num_files - 1)
+        | Up -> current_selection := max (!current_selection - 1) 0
+        | Enter ->
+          Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore;
+          Os_util.daemonize
+            ~prog:"/usr/bin/kitty"
+            ~argv:
+              [| "kitty"
+               ; "--directory"
+               ; List.nth_exn !dir_ratio_tuples !current_selection |> fst
+              |];
+          Raylib.close_window ();
+          exit 0
+        | _ ->
+          ();
 
-      let new_text =
-        draw_content !dir_ratio_tuples !input_text !current_selection
-      in
+          let new_text =
+            draw_content !dir_ratio_tuples !input_text !current_selection
+          in
 
-      if not (phys_equal new_text !input_text) then begin
-        input_text := new_text;
-        dir_ratio_tuples := calculate_scores dirs !input_text
-      end
-      else
-        ();
-      loop ()
+          if not (phys_equal new_text !input_text) then (
+            input_text := new_text;
+            dir_ratio_tuples := calculate_scores dirs !input_text)
+          else
+            ();
+          loop ()
     end
     (* raylib window should close *)
     else begin
