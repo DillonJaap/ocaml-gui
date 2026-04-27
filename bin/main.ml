@@ -1,6 +1,8 @@
 open Gui
 open Core
 
+(* TODO package this with the program or use system default? *)
+
 let calculate_edit_ratios input_text file_paths =
   file_paths
   |> List.map ~f:begin fun elt ->
@@ -11,7 +13,10 @@ let calculate_edit_ratios input_text file_paths =
 ;;
 
 let draw_files files x_offset y_offset current_selection =
-  let font_size = 18 in
+  let default_font = Raylib.load_font "assets/SpaceMono-Regular.ttf" in
+  Raylib.set_texture_filter
+    (Raylib.Font.texture default_font)
+    Raylib.TextureFilter.Bilinear;
 
   (* get the max width *)
   let max_width =
@@ -37,11 +42,14 @@ let draw_files files x_offset y_offset current_selection =
         ();
 
       (* drow the file name *)
-      Raylib.draw_text
+      Raylib.draw_text_ex
+        default_font
         (fst elt)
-        x_offset
-        (y_offset + 25 + (i * 25))
-        font_size
+        (Raylib.Vector2.create
+           (x_offset |> float_of_int)
+           (y_offset + 25 + (i * 25) |> float_of_int))
+        36.0
+        1.0
         Raylib.Color.gold
     end;
 
@@ -129,50 +137,54 @@ let raylib_loop () =
 
   let rec loop () =
     (* close window and exit loop *)
-    if not (Raylib.window_should_close ()) then begin (* handle keypresses *)
-      let open Raylib.Key in
-      begin match Raylib.get_key_pressed () with
-      | Down -> current_selection := min (!current_selection + 1) (num_files - 1)
-      | Up -> current_selection := max (!current_selection - 1) 0
-      (* open kitty window in selected directory *)
-      | Enter ->
-        (* Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore; *)
-        let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        Os_util.daemonize
-          ~prog:kitty_exec_path
-          ~argv:[| "kitty"; "--directory"; dir |];
-        Raylib.close_window ();
-        exit 0
-      (* open kitty tab in selected directory *)
-      | Tab ->
-        let _ =
+    if not (Raylib.window_should_close ()) then begin
+      (* handle keypresses *)
+        let open Raylib.Key in
+        begin match Raylib.get_key_pressed () with
+        | Down ->
+          current_selection := min (!current_selection + 1) (num_files - 1)
+        | Up -> current_selection := max (!current_selection - 1) 0
+        (* open kitty window in selected directory *)
+        | Enter ->
+          (* Stdlib.Sys.set_signal Stdlib.Sys.sigchld Stdlib.Sys.Signal_ignore; *)
           let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-          let file_name =
-            dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
+          Os_util.daemonize
+            ~prog:kitty_exec_path
+            ~argv:[| "kitty"; "--directory"; dir |];
+          Raylib.close_window ();
+          exit 0
+        (* open kitty tab in selected directory *)
+        | Tab ->
+          let _ =
+            let dir =
+              List.nth_exn !dir_ratio_tuples !current_selection |> fst
+            in
+            let file_name =
+              dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
+            in
+            Stdlib.Sys.command
+            @@ Printf.sprintf
+                 "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
+                 file_name
+                 dir
           in
-          Stdlib.Sys.command
-          @@ Printf.sprintf
-               "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
-               file_name
-               dir
+          Raylib.close_window ();
+          exit 0
+        | _ -> ()
+        end;
+
+        (* get new input from text box *)
+        let new_text =
+          draw_content !dir_ratio_tuples !input_text !current_selection
         in
-        Raylib.close_window ();
-        exit 0
-      | _ -> ()
-      end;
 
-      (* get new input from text box *)
-      let new_text =
-        draw_content !dir_ratio_tuples !input_text !current_selection
-      in
-
-      (* only calculate scores if text changed *)
-      if not (phys_equal new_text !input_text) then (
-        input_text := new_text;
-        dir_ratio_tuples := calculate_scores dirs !input_text)
-      else
-        ();
-      loop ()
+        (* only calculate scores if text changed *)
+        if not (phys_equal new_text !input_text) then (
+          input_text := new_text;
+          dir_ratio_tuples := calculate_scores dirs !input_text)
+        else
+          ();
+        loop ()
     end
     (* raylib window should close *)
     else begin
@@ -198,7 +210,7 @@ let setup () =
   Raylib.set_target_fps 60;
 
   (* Set text size to 24px for ALL controls *)
-  Raygui.set_style (Raygui.Control.Default `Text_size) 18;
+  Raygui.set_style (Raygui.Control.Default `Text_size) 22;
 
   (* remove window decoration *)
   Raylib.set_window_state [ Raylib.ConfigFlags.Window_undecorated ]
