@@ -1,4 +1,6 @@
 (library
  (name gui)
- (libraries core core_unix)
- (modules scoring sysUtil textEditor))
+ (libraries core core_unix sexplib)
+ (preprocess
+  (pps ppx_jane))
+ (modules scoring sysUtil textEditor config))

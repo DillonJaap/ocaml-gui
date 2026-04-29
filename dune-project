@@ -26,10 +26,12 @@
   raylib
   raygui
   spawn
+  sexplib
   (ocaml-lsp-server :dev)
   (merlin :dev)
   (ocamlformat :dev)
-  (ppx_deriving :build))
+  (ppx_deriving :build)
+  (ppx_jane :build))
  (tags
   ("add topics" "to describe" your project)))
 

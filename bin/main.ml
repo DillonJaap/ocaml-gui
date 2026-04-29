@@ -17,12 +17,14 @@ let calculate_scores input_text file_paths =
 let draw_files
       ?(x = 0)
       ?(y = 0)
-      ?(font_size = 36.0)
+      ?(font_size = 36)
       ?(font_gap = 0.0)
       files
       current_selection
       font
   =
+  let font_size = font_size |> float_of_int in
+
   (* get the max width *)
   let max_width =
     List.fold files ~init:0.0 ~f:begin fun acc a ->
@@ -45,7 +47,12 @@ let draw_files
   List.iteri files ~f:begin fun i elt ->
       (* draw selected element *)
       if i = current_selection then
-        draw_rectangle x_offset (y + (i * font_height)) max_width 36 Color.blue
+        draw_rectangle
+          x_offset
+          (y + (i * font_height))
+          max_width
+          font_height
+          Color.blue
       else
         ();
 
@@ -93,8 +100,10 @@ let raylib_loop () =
   in
   set_texture_filter (Font.texture font) TextureFilter.Trilinear;
 
+  (* load config *)
+  let config = Config.load_config in
   Raygui.set_font font;
-  Raygui.set_style (Raygui.Control.Default `Text_size) 36;
+  Raygui.set_style (Raygui.Control.Default `Text_size) config.font_size;
 
   (* values that get mutated by user input *)
   let input_text = ref "" in
@@ -189,7 +198,13 @@ let raylib_loop () =
         let new_text, _ = Raygui.text_box rect (pad_input !input_text) true in
 
         (* file list *)
-        draw_files !dir_ratio_tuples !current_selection font ~x:0 ~y:100;
+        draw_files
+          !dir_ratio_tuples
+          !current_selection
+          font
+          ~font_size:config.font_size
+          ~x:0
+          ~y:100;
 
         end_drawing ();
         new_text
