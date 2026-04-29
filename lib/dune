@@ -1,4 +1,4 @@
 (library
  (name gui)
  (libraries core core_unix)
- (modules levenshtein os_util))
+ (modules scoring sysUtil))

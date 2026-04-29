@@ -11,6 +11,9 @@
 - [x] close after selection
 - [x] create an executable and create a hot key to run the script
 - [ ] optimized fuzzy search accuracy
+    - [x] smith waterson algo
+    - [ ] match dirs
+    - [ ] account for underscore and camel case
 - [ ] sexp config file in ~/.config/project-manager
     - [ ] asks user for values if none are set
     - [ ] os specific / fallbacks
