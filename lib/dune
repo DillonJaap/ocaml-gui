@@ -1,4 +1,4 @@
 (library
  (name gui)
  (libraries core core_unix)
- (modules scoring sysUtil))
+ (modules scoring sysUtil textEditor))
