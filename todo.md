@@ -18,10 +18,18 @@
 - [x] starting code directory 
 - [ ] include window size in config
 - [ ] custom parser for sexp config so don't have to name every field
+- [ ] font is loaded from os instead of directly from file path
 
 ## Get Git Directories Improvements
 - [ ] index/cache results
 - [ ] asynrounesly parse the directories
+
+## make a text editor box
+- [ ] can change cursor location
+- [ ] can backspace anywhere 
+- [ ] can insert new line in text box but not input bar
+- [ ] can select text and copy and paste
+- [ ] basic datastructure
 
 # glitches
 - [x] sorting doesn't change actual selection
@@ -29,11 +37,6 @@
 - [x] app should only calc on input change
 
 # Big Ideas
-## make a text editor box
-- [ ] can change cursor location
-- [ ] can backspace anywhere 
-- [ ] can select text and copy and paste
-- [ ] eventually use real text editor datastructure
 
 ## raycast-like program
 - format json
