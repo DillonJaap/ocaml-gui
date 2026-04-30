@@ -14,7 +14,7 @@ let calculate_scores input_text file_paths =
   |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
 ;;
 
-let draw_matched_list
+let draw_ranked_list
       ?(x = 0)
       ?(y = 0)
       ?(font_size = 36)
@@ -97,55 +97,46 @@ let pad_input ?(max_len = 256) s =
   s ^ String.make (max_len - String.length s) '\x00'
 ;;
 
-let raylib_loop () =
-  (* set default font *)
-  let font =
-    load_font "/home/dillon/code/ocaml-gui/assets/SpaceMono-Regular.ttf"
-  in
+type config =
+  { font_size : int
+  ; code_dir : string
+  ; font : Font.t
+  ; launchers : Config.launcher list
+  }
+
+let initialize_configuration () =
+  let config_file = Config.parse_config_file () in
+  (* set font *)
+  let font = load_font config_file.font_dir in
   set_texture_filter (Font.texture font) TextureFilter.Trilinear;
 
-  (* load config *)
-  let config = Config.load_config () in
+  (* set ray gui font options *)
   Raygui.set_font font;
-  Raygui.set_style (Raygui.Control.Default `Text_size) config.font_size;
+  Raygui.set_style (Raygui.Control.Default `Text_size) config_file.font_size;
+
+  (* verifiy code_dir exists *)
+  if not (SysUtil.file_exists_and_is_dir config_file.code_dir) then
+    failwith
+      (Printf.sprintf "no such code path directory: %s" config_file.code_dir);
+
+  { font_size = config_file.font_size
+  ; code_dir = config_file.code_dir
+  ; font
+  ; launchers = config_file.launchers
+  }
+;;
+
+let raylib_loop () =
+  let config = initialize_configuration () in
+  let neovide_exec_path = (config.launchers |> List.hd_exn).path in
 
   (* values that get mutated by user input *)
   let input_text = ref "" in
   let current_selection = ref 0 in
   let _launcher = ref None in
 
-  (* directories *)
-  let mac_home = "/Users/DJaap" in
-  let linux_home = "/home/dillon" in
-  let home_dir =
-    if SysUtil.file_exists_and_is_dir linux_home then
-      linux_home
-    else if SysUtil.file_exists_and_is_dir mac_home then
-      mac_home
-    else
-      failwith
-        (Printf.sprintf
-           "no such directories, \"%s\" or \"%s\""
-           linux_home
-           mac_home
-        )
-  in
-  let code_dir = home_dir ^ "/code" in
-
-  (* execution path *)
-  let _kitty_exec_path =
-    if Stdlib.Sys.file_exists linux_home then
-      "/usr/bin/kitty"
-    else if Stdlib.Sys.file_exists mac_home then
-      "/Applications/kitty.app/Contents/MacOS/kitty"
-    else
-      failwith
-      @@ Printf.sprintf "no such execs, \"%s\" or \"%s\"" linux_home mac_home
-  in
-  let neovide_exec_path = "/home/dillon/.nix-profile/bin/neovide" in
-
-  (* code project directior info *)
-  let dirs = SysUtil.find_git_dirs code_dir in
+  (* code project directories info *)
+  let dirs = SysUtil.find_git_dirs config.code_dir in
   let num_files = List.length dirs in
   let dir_ratio_tuples = ref (calculate_scores !input_text dirs) in
 
@@ -206,12 +197,13 @@ let raylib_loop () =
         let rect = Rectangle.create x 5.0 500.0 70.0 in
         let new_text, _ = Raygui.text_box rect (pad_input !input_text) true in
 
-        (* file list *)
-        draw_matched_list
+        (* ranked file list *)
+        draw_ranked_list
           !dir_ratio_tuples
           !current_selection
           ~font_size:config.font_size
-          ~font
+          ~font:config.font
+          ~draw_score:true
           ~x:0
           ~y:100;
 

@@ -1,4 +1,6 @@
 ((font_size 36)
+ (code_dir "/home/dillon/code")
+ (font_dir "/home/dillon/code/ocaml-gui/assets/SpaceMono-Regular.ttf")
  (launchers 
 	(
 	 ((path neovide) (args ("neovide")))
