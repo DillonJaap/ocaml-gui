@@ -14,20 +14,21 @@ let calculate_scores input_text file_paths =
   |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
 ;;
 
-let draw_files
+let draw_matched_list
       ?(x = 0)
       ?(y = 0)
       ?(font_size = 36)
       ?(font_gap = 0.0)
-      files
+      ?(draw_score = false)
+      ~font
+      item_score_tuples
       current_selection
-      font
   =
   let font_size = font_size |> float_of_int in
 
   (* get the max width *)
   let max_width =
-    List.fold files ~init:0.0 ~f:begin fun acc a ->
+    List.fold item_score_tuples ~init:0.0 ~f:begin fun acc a ->
         let text_width =
           measure_text_ex font (fst a) font_size font_gap |> Vector2.x
         in
@@ -44,7 +45,7 @@ let draw_files
   let y_offset = y in
 
   (* draw the file names*)
-  List.iteri files ~f:begin fun i elt ->
+  List.iteri item_score_tuples ~f:begin fun i elt ->
       (* draw selected element *)
       if i = current_selection then
         draw_rectangle
@@ -69,20 +70,23 @@ let draw_files
         Color.gold
     end;
 
-  (* draw the Levenshtein ratio *)
-    List.iteri files ~f:begin fun i elt ->
-      draw_text_ex
-        font
-        (string_of_float (snd elt))
-        (Vector2.create
-           (float_of_int (x_offset + max_width + 20))
-           (float_of_int (y_offset + (i * font_height)))
-        )
-        font_size
-        font_gap
-        Color.gold
-    end
+  (* draw the score *)
+  if draw_score then
+    List.iteri item_score_tuples ~f:begin fun i elt ->
+        draw_text_ex
+          font
+          (string_of_float (snd elt))
+          (Vector2.create
+             (float_of_int (x_offset + max_width + 20))
+             (float_of_int (y_offset + (i * font_height)))
+          )
+          font_size
+          font_gap
+          Color.gold
+      end
 ;;
+
+(* let launch_app path argvs = *)
 
 (** [pad_input ~max_len s] pads [s] with null bytes up to [max_len] before
     passing it to raygui's [text_box]. The raygui binding allocates a C buffer
@@ -108,6 +112,7 @@ let raylib_loop () =
   (* values that get mutated by user input *)
   let input_text = ref "" in
   let current_selection = ref 0 in
+  let _launcher = ref None in
 
   (* directories *)
   let mac_home = "/Users/DJaap" in
@@ -128,7 +133,7 @@ let raylib_loop () =
   let code_dir = home_dir ^ "/code" in
 
   (* execution path *)
-  let kitty_exec_path =
+  let _kitty_exec_path =
     if Stdlib.Sys.file_exists linux_home then
       "/usr/bin/kitty"
     else if Stdlib.Sys.file_exists mac_home then
@@ -137,6 +142,7 @@ let raylib_loop () =
       failwith
       @@ Printf.sprintf "no such execs, \"%s\" or \"%s\"" linux_home mac_home
   in
+  let neovide_exec_path = "/home/dillon/.nix-profile/bin/neovide" in
 
   (* code project directior info *)
   let dirs = SysUtil.find_git_dirs code_dir in
@@ -159,9 +165,12 @@ let raylib_loop () =
       | Enter ->
         (* open kitty window in selected directory *)
         let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
+        (* SysUtil.daemonize *)
+        (*   ~prog:kitty_exec_path *)
+        (*   ~argv:[| "kitty"; "--directory"; dir |]; *)
         SysUtil.daemonize
-          ~prog:kitty_exec_path
-          ~argv:[| "kitty"; "--directory"; dir |];
+          ~prog:neovide_exec_path
+          ~argv:[| "neovide"; "--chdir"; dir |];
 
         close_window ();
         exit 0
@@ -198,11 +207,11 @@ let raylib_loop () =
         let new_text, _ = Raygui.text_box rect (pad_input !input_text) true in
 
         (* file list *)
-        draw_files
+        draw_matched_list
           !dir_ratio_tuples
           !current_selection
-          font
           ~font_size:config.font_size
+          ~font
           ~x:0
           ~y:100;
 

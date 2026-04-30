@@ -1,7 +1,7 @@
 ((font_size 36)
  (launchers 
 	(
-	 ((name neovide) (args ("neovide")))
-	 ((name kitty) (args ("kitty" "--directory")))
+	 ((path neovide) (args ("neovide")))
+	 ((path kitty) (args ("kitty" "--directory")))
 	)
  ))

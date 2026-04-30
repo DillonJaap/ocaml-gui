@@ -2,7 +2,7 @@ open Sexplib.Std
 open Core
 
 type launcher =
-  { name : string
+  { path : string
   ; args : string list
   }
 [@@deriving sexp]
