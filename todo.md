@@ -1,29 +1,27 @@
-# Design
-- [x] be able to type in an input box
-- [x] upon text change the options dynamically update
-- [x] selections are searched by looking for git directories
-- [x] making a selection opens kitty
-- [x] be able to select the option with arrow keys + enter
-- [x] update to use Janestreet Core instead of the stdlib
-- [x] open a kitty window in the selected directory
-    - [x] optionally open a kitty tab?
-- [x] close after selection
-- [x] create an executable and create a hot key to run the script
-- [ ] optimized fuzzy search accuracy
-    - [x] smith waterson algo
-    - [ ] match dirs
-    - [ ] account for underscore and camel case
-    - [ ] typo resistent?
-- [ ] sexp config file in ~/.config/project-manager
-    - [x] working file with some settings 
-    - [ ] asks user for values if none are set
-    - [ ] os specific / fallbacks
-    - [ ] optionally can be json
-    - [ ] starting code directory 
-    - [ ] include window size in config
+# Features
+
+## misc
 - [ ] create a log file (somewhere?)
 - [ ] use socket to open kitty tab (should account for -pid suffix on file name)
+
+## fuzzy search
+- [x] smith waterson algo
+- [ ] match dirs not just file name
+- [ ] account for underscore, camel case, dashes, etc...
+- [ ] typo resistent?
+
+## config file
+- [x] sexp config file in ~/.config/project-manager
+- [ ] asks user for values if none are set
+- [ ] os specific / fallbacks
+- [ ] optionally can be json
+- [x] starting code directory 
+- [ ] include window size in config
 - [ ] custom parser for sexp config so don't have to name every field
+
+## Get Git Directories Improvements
+- [ ] index/cache results
+- [ ] asynrounesly parse the directories
 
 # glitches
 - [x] sorting doesn't change actual selection
@@ -51,5 +49,6 @@
 
 ## libs/tech
 - use [eio](https://github.com/ocaml-multicore/eio) of operation system IO
+- maybe eventually use FFF instead
 
 
