@@ -20,6 +20,7 @@
     - [ ] optionally can be json
 - [ ] create a log file (somewhere?)
 - [ ] use socket to open kitty tab (should account for -pid suffix on file name)
+- [ ] custom parser for sexp config so don't have to name every field
 
 # glitches
 - [x] sorting doesn't change actual selection

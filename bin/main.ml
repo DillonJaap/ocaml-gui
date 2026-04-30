@@ -101,7 +101,7 @@ let raylib_loop () =
   set_texture_filter (Font.texture font) TextureFilter.Trilinear;
 
   (* load config *)
-  let config = Config.load_config in
+  let config = Config.load_config () in
   Raygui.set_font font;
   Raygui.set_style (Raygui.Control.Default `Text_size) config.font_size;
 

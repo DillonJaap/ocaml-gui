@@ -1,3 +1,7 @@
-(
- ( font-size 32)
-)
+((font_size 36)
+ (launchers 
+	(
+	 ((name neovide) (args ("neovide")))
+	 ((name kitty) (args ("kitty" "--directory")))
+	)
+ ))
