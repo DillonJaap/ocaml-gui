@@ -3,4 +3,4 @@
  (name main)
  (libraries gui core raylib raygui core_unix spawn)
  (preprocess
-  (pps ppx_deriving.show)))
+  (pps ppx_jane)))

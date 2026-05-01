@@ -3,12 +3,14 @@
 ## misc
 - [ ] create a log file (somewhere?)
 - [ ] use socket to open kitty tab (should account for -pid suffix on file name)
+- [ ] typing puts selection back to the first item
 
 ## fuzzy search
 - [x] smith waterson algo
 - [ ] match dirs not just file name
 - [ ] account for underscore, camel case, dashes, etc...
 - [ ] typo resistent?
+- [ ] hide results below a certain score
 
 ## config file
 - [x] sexp config file in ~/.config/project-manager

@@ -106,6 +106,19 @@ type config =
 
 let initialize_configuration () =
   let config_file = Config.parse_config_file () in
+  print_s [%sexp (config_file : Config.config_file)];
+
+  let config_file =
+    match
+      ( Core_unix.Utsname.sysname (Core_unix.uname ())
+      , config_file.mac
+      , config_file.linux )
+    with
+    | "linux", _, Some linux -> linux
+    | "mac", Some mac, _ -> mac
+    | _ -> config_file.global
+  in
+
   (* set font *)
   let font = load_font config_file.font_dir in
   set_texture_filter (Font.texture font) TextureFilter.Trilinear;
@@ -147,44 +160,70 @@ let raylib_loop () =
       exit 0
     );
 
-    let open Key in
     (* handle keypresses *)
-    begin
-      begin match get_key_pressed () with
-      | Down -> current_selection := min (!current_selection + 1) (num_files - 1)
-      | Up -> current_selection := max (!current_selection - 1) 0
-      | Enter ->
-        (* open kitty window in selected directory *)
+    let open Key in
+    (* ctrl chords *)
+    if
+      Raylib.is_key_down Raylib.Key.Left_control
+      || Raylib.is_key_down Raylib.Key.Right_control
+    then (
+      match
+        get_key_pressed ()
+      with
+      | A ->
         let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        (* SysUtil.daemonize *)
-        (*   ~prog:kitty_exec_path *)
-        (*   ~argv:[| "kitty"; "--directory"; dir |]; *)
-        SysUtil.daemonize
-          ~prog:neovide_exec_path
-          ~argv:[| "neovide"; "--chdir"; dir |];
+        let launcher = List.nth_exn config.launchers 0 in
 
+        SysUtil.daemonize
+          ~prog:launcher.path
+          ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
         close_window ();
         exit 0
-      | Tab ->
-        (* open kitty tab in selected directory *)
+      | B ->
         let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        let file_name =
-          dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
-        in
+        let launcher = List.nth_exn config.launchers 1 in
 
-        Stdlib.Sys.command
-          (Printf.sprintf
-             "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
-             file_name
-             dir
-          )
-        |> ignore;
-
+        SysUtil.daemonize
+          ~prog:launcher.path
+          ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
         close_window ();
         exit 0
       | _ -> ()
-      end
-    end;
+    ) else (
+      (* regular presses *)
+        match
+          get_key_pressed ()
+        with
+        | Down ->
+          current_selection := min (!current_selection + 1) (num_files - 1)
+        | Up -> current_selection := max (!current_selection - 1) 0
+        | Enter ->
+          let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
+          SysUtil.daemonize
+            ~prog:neovide_exec_path
+            ~argv:[| "neovide"; "--chdir"; dir |];
+
+          close_window ();
+          exit 0
+        | Tab ->
+          (* open kitty tab in selected directory *)
+          let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
+          let file_name =
+            dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
+          in
+
+          Stdlib.Sys.command
+            (Printf.sprintf
+               "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
+               file_name
+               dir
+            )
+          |> ignore;
+
+          close_window ();
+          exit 0
+        | _ -> ()
+    );
 
     (* get new input from text box *)
     let new_text =
