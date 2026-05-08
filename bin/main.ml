@@ -172,7 +172,7 @@ let raylib_loop () =
       with
       | A ->
         let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        let launcher = List.nth_exn config.launchers 0 in
+        let launcher = List.nth_exn config.launchers 1 in
 
         SysUtil.daemonize
           ~prog:launcher.path
@@ -181,7 +181,7 @@ let raylib_loop () =
         exit 0
       | B ->
         let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        let launcher = List.nth_exn config.launchers 1 in
+        let launcher = List.nth_exn config.launchers 2 in
 
         SysUtil.daemonize
           ~prog:launcher.path
