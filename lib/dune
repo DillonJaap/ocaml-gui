@@ -1,6 +1,6 @@
 (library
  (name gui)
- (libraries core core_unix sexplib)
+ (libraries core core_unix sexplib raylib)
  (preprocess
   (pps ppx_jane))
- (modules scoring sysUtil textEditor config))
+ (modules scoring sysUtil textArea config textBox))
