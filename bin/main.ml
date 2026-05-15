@@ -277,7 +277,7 @@ let text_box config =
 
     begin_drawing ();
     clear_background Color.darkgray;
-    input_textbox := TextBox.draw ~font:config.font !input_textbox true;
+    input_textbox := TextBox.draw ~font:config.font true;
     end_drawing ();
 
     loop ()

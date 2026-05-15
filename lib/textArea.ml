@@ -20,62 +20,44 @@ module type TextEditor = sig
   val delete : 'a t -> unit
 end
 
-module TextArea_Buffer = struct
-  type data =
-    { mutable cursor_position : int
-    ; mutable text : Buffer.t
-    }
-
-  let insert data text pos =
-    let start = Buffer.sub data.text ~pos:0 ~len:pos in
-    let end_ = Buffer.sub data.text ~pos ~len:(Buffer.length data.text - 1) in
-    data.text
-    <- Buffer.create
-         (Bytes.length start + String.length text + Bytes.length end_);
-    Buffer.add_bytes data.text start;
-    Buffer.add_string data.text text;
-    Buffer.add_bytes data.text end_
-  ;;
-
-  let delete data start_pos end_pos =
-    let start = Buffer.sub data.text ~pos:0 ~len:(start_pos - 1) in
-    let end_ =
-      Buffer.sub data.text ~pos:(end_pos + 1) ~len:(Buffer.length data.text - 1)
-    in
-    data.text <- Buffer.create (Bytes.length start + Bytes.length end_);
-    Buffer.add_bytes data.text start;
-    Buffer.add_bytes data.text end_
-  ;;
-end
-
 module IntArray = struct
-  let insert data text pos =
-    if pos = Array.length !data - 1 then
-      data := Array.append !data text
+  let insert text text_to_insert pos =
+    if pos = Array.length !text - 1 then
+      text := Array.append !text text_to_insert
     else begin
-      let start = Array.sub !data ~pos:0 ~len:pos in
-      let end_ = Array.sub !data ~pos ~len:(Array.length !data - 1) in
-
-      data
-      := Array.create ~len:0 0
-         |> Array.append start
-         |> Array.append text
-         |> Array.append end_
+      let new_text =
+        Array.create 0 ~len:(Array.length !text + Array.length text_to_insert)
+      in
+      Array.blit ~src:!text ~dst:new_text ~src_pos:0 ~dst_pos:0 ~len:pos;
+      Array.blit
+        ~src:text_to_insert
+        ~dst:new_text
+        ~src_pos:0
+        ~dst_pos:pos
+        ~len:(Array.length text_to_insert);
+      Array.blit
+        ~src:!text
+        ~dst:new_text
+        ~src_pos:pos
+        ~dst_pos:(pos + Array.length text_to_insert)
+        ~len:(Array.length !text - pos);
+      text := new_text
     end
   ;;
 
-  let delete data start_pos end_pos =
-    let len = Array.length !data in
-    let amount_to_delete = end_pos - start_pos in
+  let delete text start_pos end_pos =
+    let len = Array.length !text in
+    let amount_to_delete = end_pos - start_pos + 1 in
 
-    data := Array.create 0 ~len:(len - amount_to_delete);
-    for i = 0 to start_pos - 2 do
-      !data.(i) <- !data.(i)
-    done;
-
-    for i = end_pos - amount_to_delete to len - 1 - amount_to_delete do
-      !data.(i) <- !data.(i)
-    done
+    let new_data = Array.create 0 ~len:(len - amount_to_delete) in
+    Array.blit ~src:!text ~dst:new_data ~src_pos:0 ~dst_pos:0 ~len:start_pos;
+    Array.blit
+      ~src:!text
+      ~dst:new_data
+      ~src_pos:(end_pos + 1)
+      ~dst_pos:start_pos
+      ~len:(len - end_pos - 1);
+    text := new_data
   ;;
 
   let to_carray text =
