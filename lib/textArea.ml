@@ -75,14 +75,7 @@ module IntArray = struct
 
     for i = end_pos - amount_to_delete to len - 1 - amount_to_delete do
       !data.(i) <- !data.(i)
-    done;
-
-    let start = Array.sub !data ~pos:0 ~len:start_pos in
-    let end_ =
-      Array.sub !data ~pos:(end_pos + 1) ~len:(Array.length !data - 1 - end_pos)
-    in
-
-    data := Array.create ~len:0 0 |> Array.append start |> Array.append end_
+    done
   ;;
 
   let to_carray text =
