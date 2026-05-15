@@ -139,14 +139,11 @@ let initialize_configuration () =
   }
 ;;
 
-let raylib_loop () =
-  let config = initialize_configuration () in
-  let neovide_exec_path = (config.launchers |> List.hd_exn).path in
-
+let selection config =
   (* values that get mutated by user input *)
   let input_text = ref "" in
+  let new_text = ref "" in
   let current_selection = ref 0 in
-  let _launcher = ref None in
 
   (* code project directories info *)
   let dirs = SysUtil.find_git_dirs config.code_dir in
@@ -161,101 +158,127 @@ let raylib_loop () =
     );
 
     (* handle keypresses *)
-    let open Key in
-    (* ctrl chords *)
-    if
-      Raylib.is_key_down Raylib.Key.Left_control
-      || Raylib.is_key_down Raylib.Key.Right_control
-    then (
-      match
-        get_key_pressed ()
-      with
-      | A ->
-        let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        let launcher = List.nth_exn config.launchers 1 in
-
-        SysUtil.daemonize
-          ~prog:launcher.path
-          ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
-        close_window ();
-        exit 0
-      | B ->
-        let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-        let launcher = List.nth_exn config.launchers 2 in
-
-        SysUtil.daemonize
-          ~prog:launcher.path
-          ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
-        close_window ();
-        exit 0
-      | _ -> ()
-    ) else (
-      (* regular presses *)
+    begin
+      let open Key in
+      (* ctrl chords *)
+      if
+        Raylib.is_key_down Raylib.Key.Left_control
+        || Raylib.is_key_down Raylib.Key.Right_control
+      then (
         match
           get_key_pressed ()
         with
-        | Down ->
-          current_selection := min (!current_selection + 1) (num_files - 1)
-        | Up -> current_selection := max (!current_selection - 1) 0
-        | Enter ->
+        | A ->
           let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-          SysUtil.daemonize
-            ~prog:neovide_exec_path
-            ~argv:[| "neovide"; "--chdir"; dir |];
+          let launcher = List.nth_exn config.launchers 1 in
 
+          SysUtil.daemonize
+            ~prog:launcher.path
+            ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
           close_window ();
           exit 0
-        | Tab ->
-          (* open kitty tab in selected directory *)
+        | B ->
           let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
-          let file_name =
-            dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
-          in
+          let launcher = List.nth_exn config.launchers 2 in
 
-          Stdlib.Sys.command
-            (Printf.sprintf
-               "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
-               file_name
-               dir
-            )
-          |> ignore;
-
+          SysUtil.daemonize
+            ~prog:launcher.path
+            ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
           close_window ();
           exit 0
         | _ -> ()
-    );
+      ) else (
+        (* regular presses *)
+          match
+            get_key_pressed ()
+          with
+          | Down ->
+            current_selection := min (!current_selection + 1) (num_files - 1)
+          | Up -> current_selection := max (!current_selection - 1) 0
+          | Enter ->
+            let dir =
+              List.nth_exn !dir_ratio_tuples !current_selection |> fst
+            in
+            let launcher = List.nth_exn config.launchers 0 in
 
-    (* get new input from text box *)
-    let new_text =
-      begin
-        begin_drawing ();
-        clear_background Color.darkgray;
+            SysUtil.daemonize
+              ~prog:launcher.path
+              ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
+            close_window ();
+            exit 0
+          | Tab ->
+            (* open kitty tab in selected directory *)
+            let dir =
+              List.nth_exn !dir_ratio_tuples !current_selection |> fst
+            in
+            let file_name =
+              dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
+            in
 
-        (* text box *)
-        let x = (get_screen_width () - 500) / 2 |> float_of_int in
-        let rect = Rectangle.create x 5.0 500.0 70.0 in
-        let new_text, _ = Raygui.text_box rect (pad_input !input_text) true in
+            Stdlib.Sys.command
+              (Printf.sprintf
+                 "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
+                 file_name
+                 dir
+              )
+            |> ignore;
 
-        (* ranked file list *)
-        draw_ranked_list
-          !dir_ratio_tuples
-          !current_selection
-          ~font_size:config.font_size
-          ~font:config.font
-          ~draw_score:true
-          ~x:0
-          ~y:100;
+            close_window ();
+            exit 0
+            (* handle text box input *)
+          | _ -> ()
+      )
+    end;
 
-        end_drawing ();
-        new_text
-      end
-    in
+    (* draw *)
+    begin
+      begin_drawing ();
+      clear_background Color.darkgray;
+
+      (* text box *)
+      let x = (get_screen_width () - 500) / 2 |> float_of_int in
+      let rect = Rectangle.create x 5.0 500.0 70.0 in
+      let text, _ = Raygui.text_box rect (pad_input !input_text) true in
+      new_text := text;
+
+      (* ranked file list *)
+      draw_ranked_list
+        !dir_ratio_tuples
+        !current_selection
+        ~font_size:config.font_size
+        ~font:config.font
+        ~draw_score:true
+        ~x:0
+        ~y:100;
+
+      end_drawing ()
+    end;
 
     (* only calculate scores if text changed *)
-    if not (phys_equal new_text !input_text) then (
-      input_text := new_text;
+    if not (phys_equal !new_text !input_text) then (
+      input_text := !new_text;
       dir_ratio_tuples := calculate_scores !input_text dirs
     );
+    ();
+    loop ()
+  in
+  loop ()
+;;
+
+let text_box config =
+  let input_textbox = ref [||] in
+
+  let rec loop () =
+    (* close window and exit loop *)
+    if window_should_close () then (
+      close_window ();
+      exit 0
+    );
+
+    begin_drawing ();
+    clear_background Color.darkgray;
+    input_textbox := TextBox.draw ~font:config.font !input_textbox true;
+    end_drawing ();
 
     loop ()
   in
@@ -285,5 +308,6 @@ let setup () =
 
 let () =
   setup ();
-  raylib_loop ()
+  let config = initialize_configuration () in
+  text_box config
 ;;

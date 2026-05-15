@@ -15,7 +15,7 @@
 ## config file
 - [x] sexp config file in ~/.config/project-manager
 - [ ] asks user for values if none are set
-- [ ] os specific / fallbacks
+- [x] os specific / fallbacks
 - [ ] optionally can be json
 - [x] starting code directory 
 - [ ] include window size in config
@@ -32,6 +32,10 @@
 - [ ] can insert new line in text box but not input bar
 - [ ] can select text and copy and paste
 - [ ] basic datastructure
+- [ ] support UTF-8 input
+- [ ] Q: should I draw text character by character?
+- [ ] figure out base datastructure for the text (int array, carray, custom, from library? etc...)
+- [ ] datastructure for text box (finger trees?)
 
 # glitches
 - [x] sorting doesn't change actual selection

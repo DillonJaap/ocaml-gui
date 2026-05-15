@@ -48,21 +48,16 @@ module TextArea_Buffer = struct
   ;;
 end
 
-module TextArea_UChar = struct
-  type data =
-    { mutable cursor_position : int
-    ; mutable text : Uchar.t array
-    }
-
+module IntArray = struct
   let insert data text pos =
-    if pos = Array.length data.text - 1 then
-      data.text <- Array.append data.text text
+    if pos = Array.length !data - 1 then
+      data := Array.append !data text
     else begin
-      let start = Array.sub data.text ~pos:0 ~len:pos in
-      let end_ = Array.sub data.text ~pos ~len:(Array.length data.text - 1) in
+      let start = Array.sub !data ~pos:0 ~len:pos in
+      let end_ = Array.sub !data ~pos ~len:(Array.length !data - 1) in
 
-      data.text
-      <- Array.create ~len:0 (Uchar.of_char 'c')
+      data
+      := Array.create ~len:0 0
          |> Array.append start
          |> Array.append text
          |> Array.append end_
@@ -70,14 +65,28 @@ module TextArea_UChar = struct
   ;;
 
   let delete data start_pos end_pos =
-    let start = Array.sub data.text ~pos:0 ~len:(start_pos - 1) in
+    let len = Array.length !data in
+    let amount_to_delete = end_pos - start_pos in
+
+    data := Array.create 0 ~len:(len - amount_to_delete);
+    for i = 0 to start_pos - 2 do
+      !data.(i) <- !data.(i)
+    done;
+
+    for i = end_pos - amount_to_delete to len - 1 - amount_to_delete do
+      !data.(i) <- !data.(i)
+    done;
+
+    let start = Array.sub !data ~pos:0 ~len:start_pos in
     let end_ =
-      Array.sub data.text ~pos:(end_pos + 1) ~len:(Array.length data.text - 1)
+      Array.sub !data ~pos:(end_pos + 1) ~len:(Array.length !data - 1 - end_pos)
     in
 
-    data.text
-    <- Array.create ~len:0 (Uchar.of_char 'c')
-       |> Array.append start
-       |> Array.append end_
+    data := Array.create ~len:0 0 |> Array.append start |> Array.append end_
+  ;;
+
+  let to_carray text =
+    let list = List.of_array text in
+    Ctypes.CArray.of_list Ctypes.int list
   ;;
 end
