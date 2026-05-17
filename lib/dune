@@ -3,4 +3,4 @@
  (libraries core core_unix sexplib raylib)
  (preprocess
   (pps ppx_jane))
- (modules scoring sysUtil textArea config textBox))
+ (modules scoring sysUtil textArea config textBox elements))

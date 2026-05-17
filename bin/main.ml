@@ -6,11 +6,11 @@ open Raylib
 
 let calculate_scores input_text file_paths =
   file_paths
-  |> List.map ~f:begin fun elt ->
-      (* only test against the last folder name and not the full path *)
-      let file_name = elt |> String.split ~on:'/' |> List.rev |> List.hd_exn in
-      elt, Scoring.smith_waterman input_text file_name
-    end
+  |> List.map ~f:(fun elt ->
+    (* only test against the last folder name and not the full path *)
+    let file_name = elt |> String.split ~on:'/' |> List.rev |> List.hd_exn in
+    elt, Scoring.smith_waterman input_text file_name
+  )
   |> List.sort ~compare:(fun a b -> Float.compare (snd b) (snd a))
 ;;
 
@@ -28,12 +28,12 @@ let draw_ranked_list
 
   (* get the max width *)
   let max_width =
-    List.fold item_score_tuples ~init:0.0 ~f:begin fun acc a ->
-        let text_width =
-          measure_text_ex font (fst a) font_size font_gap |> Vector2.x
-        in
-        if Float.( > ) text_width acc then text_width else acc
-      end
+    List.fold item_score_tuples ~init:0.0 ~f:(fun acc a ->
+      let text_width =
+        measure_text_ex font (fst a) font_size font_gap |> Vector2.x
+      in
+      if Float.( > ) text_width acc then text_width else acc
+    )
     |> int_of_float
   in
 
@@ -45,45 +45,45 @@ let draw_ranked_list
   let y_offset = y in
 
   (* draw the file names*)
-  List.iteri item_score_tuples ~f:begin fun i elt ->
-      (* draw selected element *)
-      if i = current_selection then
-        draw_rectangle
-          x_offset
-          (y + (i * font_height))
-          max_width
-          font_height
-          Color.blue
-      else
-        ();
+  List.iteri item_score_tuples ~f:(fun i elt ->
+    (* draw selected element *)
+    if i = current_selection then
+      draw_rectangle
+        x_offset
+        (y + (i * font_height))
+        max_width
+        font_height
+        Color.skyblue
+    else
+      ();
 
-      (* drow the file name *)
+    (* drow the file name *)
+    draw_text_ex
+      font
+      (fst elt)
+      (Vector2.create
+         (float_of_int x_offset)
+         (float_of_int (y_offset + (i * font_height)))
+      )
+      font_size
+      font_gap
+      Color.black
+  );
+
+  (* draw the score *)
+  if draw_score then
+    List.iteri item_score_tuples ~f:(fun i elt ->
       draw_text_ex
         font
-        (fst elt)
+        (string_of_float (snd elt))
         (Vector2.create
-           (float_of_int x_offset)
+           (float_of_int (x_offset + max_width + 20))
            (float_of_int (y_offset + (i * font_height)))
         )
         font_size
         font_gap
-        Color.gold
-    end;
-
-  (* draw the score *)
-  if draw_score then
-    List.iteri item_score_tuples ~f:begin fun i elt ->
-        draw_text_ex
-          font
-          (string_of_float (snd elt))
-          (Vector2.create
-             (float_of_int (x_offset + max_width + 20))
-             (float_of_int (y_offset + (i * font_height)))
-          )
-          font_size
-          font_gap
-          Color.gold
-      end
+        Color.black
+    )
 ;;
 
 (* let launch_app path argvs = *)
@@ -187,59 +187,44 @@ let selection config =
           close_window ();
           exit 0
         | _ -> ()
-      ) else (
-        (* regular presses *)
-          match
-            get_key_pressed ()
-          with
-          | Down ->
-            current_selection := min (!current_selection + 1) (num_files - 1)
-          | Up -> current_selection := max (!current_selection - 1) 0
-          | Enter ->
-            let dir =
-              List.nth_exn !dir_ratio_tuples !current_selection |> fst
-            in
-            let launcher = List.nth_exn config.launchers 0 in
+      ) else if
+          (* regular presses *)
+          is_key_pressed Down
+        then
+        current_selection := min (!current_selection + 1) (num_files - 1)
+      else if is_key_pressed Up then
+        current_selection := max (!current_selection - 1) 0
+      else if is_key_pressed Enter then (
+        let dir = List.nth_exn !dir_ratio_tuples !current_selection |> fst in
+        let launcher = List.nth_exn config.launchers 0 in
 
-            SysUtil.daemonize
-              ~prog:launcher.path
-              ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
-            close_window ();
-            exit 0
-          | Tab ->
-            (* open kitty tab in selected directory *)
-            let dir =
-              List.nth_exn !dir_ratio_tuples !current_selection |> fst
-            in
-            let file_name =
-              dir |> String.split ~on:'/' |> List.rev |> List.hd_exn
-            in
-
-            Stdlib.Sys.command
-              (Printf.sprintf
-                 "kitten @ launch --type tab --title  \"%s\" --cwd \"%s\""
-                 file_name
-                 dir
-              )
-            |> ignore;
-
-            close_window ();
-            exit 0
-            (* handle text box input *)
-          | _ -> ()
+        SysUtil.daemonize
+          ~prog:launcher.path
+          ~argv:(Array.append (launcher.args |> List.to_array) [| dir |]);
+        close_window ();
+        exit 0
       )
     end;
 
     (* draw *)
     begin
       begin_drawing ();
-      clear_background Color.darkgray;
+      clear_background Color.lightgray;
 
       (* text box *)
-      let x = (get_screen_width () - 500) / 2 |> float_of_int in
-      let rect = Rectangle.create x 5.0 500.0 70.0 in
-      let text, _ = Raygui.text_box rect (pad_input !input_text) true in
-      new_text := text;
+      (* let rect = Rectangle.create x 5.0 500.0 70.0 in *)
+      (* let text, _ = Raygui.text_box rect (pad_input !input_text) true in *)
+      (* new_text := text; *)
+      let x = (get_screen_width () - 500) / 2 in
+      new_text
+      := TextBox.draw
+           ~font:config.font
+           ~x_pos:x
+           ~y_pos:5
+           ~width:500
+           ~height:70
+           true
+         |> TextArea.IntArray.to_string;
 
       (* ranked file list *)
       draw_ranked_list
@@ -257,7 +242,8 @@ let selection config =
     (* only calculate scores if text changed *)
     if not (phys_equal !new_text !input_text) then (
       input_text := !new_text;
-      dir_ratio_tuples := calculate_scores !input_text dirs
+      dir_ratio_tuples := calculate_scores !input_text dirs;
+      current_selection := 0
     );
     ();
     loop ()
@@ -266,7 +252,7 @@ let selection config =
 ;;
 
 let text_box config =
-  let input_textbox = ref [||] in
+  let _input_textbox = ref [||] in
 
   let rec loop () =
     (* close window and exit loop *)
@@ -277,7 +263,7 @@ let text_box config =
 
     begin_drawing ();
     clear_background Color.darkgray;
-    input_textbox := TextBox.draw ~font:config.font true;
+    (* input_textbox := TextBox.draw ~font:config.font ~x_pos:20 ~y_pos:20 true; *)
     end_drawing ();
 
     loop ()
@@ -309,5 +295,5 @@ let setup () =
 let () =
   setup ();
   let config = initialize_configuration () in
-  text_box config
+  selection config
 ;;

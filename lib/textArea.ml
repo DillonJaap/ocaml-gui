@@ -22,7 +22,7 @@ end
 
 module IntArray = struct
   let insert text text_to_insert pos =
-    if pos = Array.length !text - 1 then
+    if pos = Array.length !text then
       text := Array.append !text text_to_insert
     else begin
       let new_text =
@@ -63,5 +63,13 @@ module IntArray = struct
   let to_carray text =
     let list = List.of_array text in
     Ctypes.CArray.of_list Ctypes.int list
+  ;;
+
+  let to_string codepoints =
+    let open Ctypes in
+    let byte_size = allocate int 0 in
+    Array.fold_right codepoints ~init:"" ~f:(fun cp acc ->
+      Raylib.codepoint_to_utf8 cp byte_size ^ acc
+    )
   ;;
 end

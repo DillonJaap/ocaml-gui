@@ -10,64 +10,99 @@ let get_char_pressed_as_int () =
   | c -> Some c
 ;;
 
-let draw_cursor text =
-  if !cursor_position = 0 then
-    draw_rectangle 0 20 4 36 Color.darkgreen
+let draw_cursor x_pos y_pos font_size =
+  let cursor_height = int_of_float (font_size *. 1.0) in
+  draw_rectangle x_pos y_pos 3 cursor_height Color.black
 ;;
 
-let draw ?(font_size = 36.0) ~font is_focused =
-  (* let c_text = TextArea.IntArray.to_carray !text in *)
-  (* draw_text_codepoints *)
-  (*   font *)
-  (*   c_text *)
-  (*   (Vector2.create 0.0 20.0) *)
-  (*   font_size *)
-  (*   0.0 *)
-  (*   Color.purple; *)
-  draw_cursor !text;
+let draw_background ~x_pos ~y_pos ~width ~height = draw_rectangle
 
-  let total_advance_x = ref 0 in
-  for i = 0 to Array.length !text - 1 do
-    let code_point = !text.(i) in
+let draw ?(font_size = 36.0) ~font ~x_pos ~y_pos ~width ~height focused =
+  if !cursor_position > Array.length !text then begin
+    cursor_position := Array.length !text
+  end;
 
-    let glyph_info = get_glyph_info font code_point in
-    let offset_x = GlyphInfo.offset_x glyph_info in
-    let offset_y = GlyphInfo.offset_y glyph_info in
-    let advance_x = GlyphInfo.advance_x glyph_info in
+  (* draw_background *)
+  draw_rectangle x_pos y_pos width height Color.skyblue;
 
-    draw_text_codepoint
-      font
-      !text.(i)
-      (Vector2.create
-         (float_of_int (!total_advance_x + offset_x))
-         (float_of_int (offset_y + 20))
-      )
-      font_size
-      Color.purple;
+  (* draw text and cursor *)
+  begin
+    begin_scissor_mode x_pos y_pos width height;
 
-    total_advance_x := !total_advance_x + advance_x
-  done;
+    (* vertically center text *)
+    let y_pos = y_pos + ((height / 2) - (int_of_float font_size / 2)) in
 
-  let rec handle_input () =
-    match get_key_pressed (), get_char_pressed_as_int () with
-    | Key.Backspace, _ ->
-      let pos = Array.length !text - 1 in
-      TextArea.IntArray.delete text pos pos;
-      cursor_position := max (!cursor_position - 1) 0;
-      handle_input ()
-    | _, Some c ->
-      TextArea.IntArray.insert text [| c |] (Array.length !text - 1);
-      cursor_position := !cursor_position + 1;
-      handle_input ()
-    | _, _ -> ()
+    (* add margin *)
+    let x_pos = x_pos + 5 in
+
+    let base_size = float_of_int (Font.base_size font) in
+    let scale = font_size /. base_size in
+    let total_advance_x = ref (float_of_int x_pos) in
+
+    (* draw cursor if it is at the begining of the text line *)
+    if !cursor_position = 0 && focused then begin
+      draw_cursor (int_of_float !total_advance_x) y_pos font_size
+    end;
+
+    for i = 0 to Array.length !text - 1 do
+      let code_point = !text.(i) in
+
+      let glyph_info = get_glyph_info font code_point in
+      let advance_x = float_of_int (GlyphInfo.advance_x glyph_info) *. scale in
+
+      draw_text_codepoint
+        font
+        !text.(i)
+        (Vector2.create !total_advance_x (float_of_int y_pos))
+        font_size
+        Color.black;
+
+      total_advance_x := !total_advance_x +. advance_x;
+
+      if i = !cursor_position - 1 && focused then begin
+        draw_cursor (int_of_float !total_advance_x) y_pos font_size
+      end
+    done;
+
+    end_scissor_mode ()
+  end;
+
+  let rec handle_keys () =
+    match get_key_pressed () with
+    | Key.Backspace ->
+      if !cursor_position >= 1 then begin
+        let pos = !cursor_position - 1 in
+        TextArea.IntArray.delete text pos pos;
+        cursor_position := !cursor_position - 1
+      end;
+      handle_keys ()
+    | Key.Delete ->
+      if !cursor_position < Array.length !text then begin
+        let pos = !cursor_position in
+        TextArea.IntArray.delete text pos pos
+      end;
+      handle_keys ()
+    | Key.Left ->
+      cursor_position := max 0 (!cursor_position - 1);
+      handle_keys ()
+    | Key.Right ->
+      cursor_position := min (Array.length !text) (!cursor_position + 1);
+      handle_keys ()
+    | Key.Null | _ -> ()
   in
 
-  if is_focused then (
-    match
-      get_key_pressed ()
-    with
-    | _ -> handle_input ()
-  );
+  let rec handle_chars () =
+    match get_char_pressed_as_int () with
+    | Some c ->
+      TextArea.IntArray.insert text [| c |] !cursor_position;
+      cursor_position := !cursor_position + 1;
+      handle_chars ()
+    | None -> ()
+  in
 
+  if focused then begin
+    handle_keys ();
+    handle_chars ()
+  end;
   !text
 ;;

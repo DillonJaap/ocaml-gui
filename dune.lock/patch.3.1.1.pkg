@@ -1,4 +1,4 @@
-(version 3.1.0)
+(version 3.1.1)
 
 (build
  (all_platforms
@@ -14,6 +14,6 @@
 (source
  (fetch
   (url
-   https://github.com/hannesm/patch/releases/download/v3.1.0/patch-3.1.0.tbz)
+   https://github.com/hannesm/patch/releases/download/v3.1.1/patch-3.1.1.tbz)
   (checksum
-   sha256=63d9e820295dd257f32efbfde171f1bc940c0c83aae1ed5a501bb57970d52294)))
+   sha256=9b703ef5356f01897ebc8cb2f9774430bb20d3ae93820c46f292227a9d1553f1)))

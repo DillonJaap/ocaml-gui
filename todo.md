@@ -27,13 +27,13 @@
 - [ ] asynrounesly parse the directories
 
 ## make a text editor box
-- [ ] can change cursor location
-- [ ] can backspace anywhere 
+- [x] can change cursor location
+- [x] can backspace anywhere 
 - [ ] can insert new line in text box but not input bar
 - [ ] can select text and copy and paste
-- [ ] basic datastructure
+- [x] basic datastructure
 - [ ] support UTF-8 input
-- [ ] Q: should I draw text character by character?
+- [x] Q: should I draw text character by character?
 - [ ] figure out base datastructure for the text (int array, carray, custom, from library? etc...)
 - [ ] datastructure for text box (finger trees?)
 

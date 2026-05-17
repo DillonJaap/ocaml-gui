@@ -27,6 +27,7 @@
   raygui
   spawn
   sexplib
+  (tree-sitter :dev)
   (ocaml-lsp-server :dev)
   (merlin :dev)
   (ocamlformat :dev)
