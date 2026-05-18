@@ -276,8 +276,15 @@ let element_list config =
           [ text ~color:Color.gold "this is an item in a list" ]
       ; rectangle
           ~color:Color.purple
+          ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
           [ text ~color:Color.gold "this is an item in the list" ]
-      ; rectangle ~color:Color.purple [ text ~color:Color.gold "short text" ]
+      ; rectangle
+          ~color:Color.purple
+          [ text
+              ~color:Color.gold
+              "short text"
+              ~padding:{ left = 4; right = 4; top = 4; bottom = 4 }
+          ]
       ]
     |> calculate_sizes
     |> calculate_positions

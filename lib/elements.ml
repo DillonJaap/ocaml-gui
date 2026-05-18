@@ -5,63 +5,47 @@ type direction =
   | Vertical
   | Horizontal
 
-type text =
-  { content : string
-  ; font_size : int
-  ; text_color : Raylib.Color.t
+type padding =
+  { left : int
+  ; right : int
+  ; top : int
+  ; bottom : int
   }
 
-type node =
+type node_kind =
+  | Rectangle of
+      { color : Raylib.Color.t
+      ; layout : direction
+      ; children : node list
+      }
+  | Text of
+      { content : string
+      ; font_size : int
+      ; text_color : Raylib.Color.t
+      }
+
+and node =
   { width : int
   ; height : int
   ; x_position : int
   ; y_position : int
-  ; color : Raylib.Color.t
-  ; layout : direction
-  ; children : node list
-  ; text : text option
+  ; padding : padding
+  ; kind : node_kind
   }
 
-let get_width node =
-  match node with
-  | Rectangle r -> r.width
-  | Text t -> t.width
-;;
-
-let get_height node =
-  match node with
-  | Rectangle r -> r.height
-  | Text t -> t.height
-;;
-
-let get_x node =
-  match node with
-  | Rectangle r -> r.x_position
-  | Text t -> t.y_position
-;;
-
-let get_y node =
-  match node with
-  | Rectangle r -> r.x_position
-  | Text t -> t.y_position
-;;
-
-let set_pos node x y =
-  match node with
-  | Rectangle r -> Rectangle { r with x_position = x; y_position = y }
-  | Text t -> Text { t with x_position = x; y_position = y }
-;;
-
-let text ?(font_size = 36) ~color:text_color text =
-  Text
-    { width = measure_text text font_size
-    ; height = font_size
-    ; x_position = 0
-    ; y_position = 0
-    ; text
-    ; font_size
-    ; text_color
-    }
+let text
+      ?(font_size = 36)
+      ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
+      ~color:text_color
+      text
+  =
+  { width = measure_text text font_size
+  ; height = font_size
+  ; padding
+  ; x_position = 0
+  ; y_position = 0
+  ; kind = Text { content = text; font_size; text_color }
+  }
 ;;
 
 let rectangle
@@ -70,16 +54,24 @@ let rectangle
       ?(y_position = 0)
       ?(width = 0)
       ?(height = 0)
+      ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
       ?(color = Color.blank)
       children
   =
-  Rectangle { width; height; x_position; y_position; color; layout; children }
+  { width
+  ; height
+  ; padding
+  ; x_position
+  ; y_position
+  ; kind = Rectangle { color; layout; children }
+  }
 ;;
 
 let rec calculate_sizes node =
-  match node with
-  | Text text -> Text text
-  | Rectangle rect when List.length rect.children = 0 -> Rectangle rect
+  match node.kind with
+  (* TODO calculate width and height of text here *)
+  | Text _ -> node
+  | Rectangle rect when List.length rect.children = 0 -> node
   | Rectangle rect ->
     let (~width, ~height), children =
       List.fold_map
@@ -89,58 +81,78 @@ let rec calculate_sizes node =
           let child = calculate_sizes child in
           match rect.layout with
           | Vertical ->
-            let height = height + get_height child in
-            let width = max (get_width child) width in
+            let height =
+              height + child.height + child.padding.top + child.padding.bottom
+            in
+            let width =
+              max (child.width + child.padding.left + child.padding.right) width
+            in
             (~width, ~height), child
           | Horizontal ->
-            let height = max height (get_height child) in
-            let width = width + get_width child in
+            let height =
+              max
+                (child.height + child.padding.top + child.padding.bottom)
+                height
+            in
+            let width =
+              width + child.width + child.padding.left + child.padding.right
+            in
             (~width, ~height), child
       )
     in
-    Rectangle { rect with width; height; children }
+    { node with width; height; kind = Rectangle { rect with children } }
 ;;
 
 let rec calculate_positions node =
-  match node with
-  | Text text -> Text text
-  | Rectangle rect when List.length rect.children = 0 -> Rectangle rect
+  let node =
+    { node with
+      x_position = node.x_position + node.padding.left
+    ; y_position = node.y_position + node.padding.top
+    }
+  in
+
+  match node.kind with
+  | Text text -> node
+  | Rectangle rect when List.length rect.children = 0 -> node
   | Rectangle rect ->
     let children =
       List.folding_map
         rect.children
-        ~init:(~x:rect.x_position, ~y:rect.y_position)
+        ~init:(~x:node.x_position, ~y:node.y_position)
         ~f:(fun (~x, ~y) child ->
-          (* let child = calculate_positions child in *)
           match rect.layout with
           | Vertical ->
-            let child = set_pos child x y in
-            let y = y + get_height child in
+            let child = { child with x_position = x; y_position = y } in
+            let y =
+              y + child.height + child.padding.top + child.padding.bottom
+            in
             (~x, ~y), calculate_positions child
           | Horizontal ->
-            let child = set_pos child x y in
-            let x = x + get_width child in
+            let child = { child with x_position = x; y_position = y } in
+            let x =
+              x + child.width + child.padding.left + child.padding.right
+            in
             (~x, ~y), calculate_positions child
       )
     in
-    Rectangle { rect with children }
+    { node with kind = Rectangle { rect with children } }
 ;;
 
 let rec render node =
-  match node with
+  match node.kind with
   | Rectangle rect ->
     draw_rectangle
-      rect.x_position
-      rect.y_position
-      rect.width
-      rect.height
+      node.x_position
+      node.y_position
+      node.width
+      node.height
       rect.color;
     List.iter rect.children ~f:(fun child -> render child)
   | Text text ->
     draw_text
-      text.text
-      text.x_position
-      text.y_position
+      text.content
+      node.x_position
+      node.y_position
       text.font_size
       text.text_color
 ;;
