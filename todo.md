@@ -37,6 +37,9 @@
 - [ ] figure out base datastructure for the text (int array, carray, custom, from library? etc...)
 - [ ] datastructure for text box (finger trees?)
 
+# code clean up
+- [ ] refactor node type make text nodes just be a field on the record (string option)
+
 # glitches
 - [x] sorting doesn't change actual selection
 - [x] app should close when user selects option

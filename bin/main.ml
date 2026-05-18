@@ -251,9 +251,7 @@ let selection config =
   loop ()
 ;;
 
-let text_box config =
-  let _input_textbox = ref [||] in
-
+let element_list config =
   let rec loop () =
     (* close window and exit loop *)
     if window_should_close () then (
@@ -263,9 +261,29 @@ let text_box config =
 
     begin_drawing ();
     clear_background Color.darkgray;
-    (* input_textbox := TextBox.draw ~font:config.font ~x_pos:20 ~y_pos:20 true; *)
-    end_drawing ();
 
+    (* draw tree *)
+    let open Elements in
+    rectangle
+      ~layout:Vertical
+      ~x_position:100
+      ~y_position:20
+      ~width:0
+      ~height:0
+      ~color:Color.darkpurple
+      [ rectangle
+          ~color:Color.purple
+          [ text ~color:Color.gold "this is an item in a list" ]
+      ; rectangle
+          ~color:Color.purple
+          [ text ~color:Color.gold "this is an item in the list" ]
+      ; rectangle ~color:Color.purple [ text ~color:Color.gold "short text" ]
+      ]
+    |> calculate_sizes
+    |> calculate_positions
+    |> render;
+
+    end_drawing ();
     loop ()
   in
   loop ()
@@ -295,5 +313,6 @@ let setup () =
 let () =
   setup ();
   let config = initialize_configuration () in
-  selection config
+  (* selection config *)
+  element_list config
 ;;
