@@ -38,7 +38,8 @@
 - [ ] datastructure for text box (finger trees?)
 
 # code clean up
-- [ ] refactor node type make text nodes just be a field on the record (string option)
+- [x] refactor node type make text nodes just be a field on the record (string option)
+- [ ] calculate functions don't calculate sizes/positions of their children directly do a recursive call, if this even makes sense to do?
 
 # glitches
 - [x] sorting doesn't change actual selection

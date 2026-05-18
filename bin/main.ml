@@ -86,6 +86,26 @@ let draw_ranked_list
     )
 ;;
 
+let ranked_list
+      ?(x_position = 0)
+      ?(y_position = 0)
+      ?(font_size = 28)
+      item_score_tuples
+      current_selection
+  =
+  UI.rectangle
+    ~layout:Vertical
+    ~x_position
+    ~y_position
+    ~color:Color.darkgray
+    (List.mapi item_score_tuples ~f:(fun i score_tuple ->
+       UI.rectangle
+         ~color:(if i = current_selection then Color.skyblue else Color.blank)
+         [ UI.text ~padding_all:8 ~font_size (fst score_tuple) ]
+     )
+    )
+;;
+
 (* let launch_app path argvs = *)
 
 (** [pad_input ~max_len s] pads [s] with null bytes up to [max_len] before
@@ -227,14 +247,22 @@ let selection config =
          |> TextArea.IntArray.to_string;
 
       (* ranked file list *)
-      draw_ranked_list
+      (* draw_ranked_list *)
+      (*   !dir_ratio_tuples *)
+      (*   !current_selection *)
+      (*   ~font_size:config.font_size *)
+      (*   ~font:config.font *)
+      (*   ~draw_score:true *)
+      (*   ~x:0 *)
+      (*   ~y:100; *)
+      ranked_list
+        ~x_position:0
+        ~y_position:100
         !dir_ratio_tuples
         !current_selection
-        ~font_size:config.font_size
-        ~font:config.font
-        ~draw_score:true
-        ~x:0
-        ~y:100;
+      |> UI.calculate_sizes
+      |> UI.calculate_positions
+      |> UI.render;
 
       end_drawing ()
     end;
@@ -263,7 +291,7 @@ let element_list config =
     clear_background Color.darkgray;
 
     (* draw tree *)
-    let open Elements in
+    let open UI in
     rectangle
       ~layout:Vertical
       ~x_position:100
@@ -273,18 +301,16 @@ let element_list config =
       ~color:Color.darkpurple
       [ rectangle
           ~color:Color.purple
-          [ text ~color:Color.gold "this is an item in a list" ]
+          ~padding_all:10
+          [ text ~text_color:Color.gold "this is an item in a list" ]
       ; rectangle
           ~color:Color.purple
           ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
-          [ text ~color:Color.gold "this is an item in the list" ]
+          [ text ~text_color:Color.gold "this is an item in the list" ]
       ; rectangle
           ~color:Color.purple
-          [ text
-              ~color:Color.gold
-              "short text"
-              ~padding:{ left = 4; right = 4; top = 4; bottom = 4 }
-          ]
+          ~padding_all:10
+          [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
       ]
     |> calculate_sizes
     |> calculate_positions
@@ -321,5 +347,5 @@ let () =
   setup ();
   let config = initialize_configuration () in
   (* selection config *)
-  element_list config
+  selection config
 ;;

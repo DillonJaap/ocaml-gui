@@ -22,6 +22,7 @@ type node_kind =
       { content : string
       ; font_size : int
       ; text_color : Raylib.Color.t
+      ; font : Font.t
       }
 
 and node =
@@ -36,15 +37,22 @@ and node =
 let text
       ?(font_size = 36)
       ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
-      ~color:text_color
+      ?padding_all
+      ?(text_color = Color.black)
+      ?(font = get_font_default ())
       text
   =
+  let padding =
+    match padding_all with
+    | Some p -> { left = p; right = p; top = p; bottom = p }
+    | none -> padding
+  in
   { width = measure_text text font_size
   ; height = font_size
   ; padding
   ; x_position = 0
   ; y_position = 0
-  ; kind = Text { content = text; font_size; text_color }
+  ; kind = Text { content = text; font_size; text_color; font }
   }
 ;;
 
@@ -55,9 +63,16 @@ let rectangle
       ?(width = 0)
       ?(height = 0)
       ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
+      ?padding_all
       ?(color = Color.blank)
       children
   =
+  let padding =
+    match padding_all with
+    | Some p -> { left = p; right = p; top = p; bottom = p }
+    | none -> padding
+  in
+
   { width
   ; height
   ; padding
@@ -79,6 +94,7 @@ let rec calculate_sizes node =
         ~init:(~width:0, ~height:0)
         ~f:(fun (~width, ~height) child ->
           let child = calculate_sizes child in
+
           match rect.layout with
           | Vertical ->
             let height =
@@ -104,6 +120,7 @@ let rec calculate_sizes node =
 ;;
 
 let rec calculate_positions node =
+  (* apply padding, assuming align left and justify top *)
   let node =
     { node with
       x_position = node.x_position + node.padding.left
@@ -149,11 +166,15 @@ let rec render node =
       rect.color;
     List.iter rect.children ~f:(fun child -> render child)
   | Text text ->
-    draw_text
+    draw_text_ex
+      text.font
       text.content
-      node.x_position
-      node.y_position
-      text.font_size
+      (Vector2.create
+         (float_of_int node.x_position)
+         (float_of_int node.y_position)
+      )
+      (float_of_int text.font_size)
+      0.0
       text.text_color
 ;;
 
