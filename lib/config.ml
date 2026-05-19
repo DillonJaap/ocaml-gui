@@ -1,5 +1,6 @@
 open Sexplib.Std
 open Core
+open Raylib
 
 type launcher =
   { path : string
@@ -48,4 +49,42 @@ let parse_config_file () =
     In_channel.read_all "/home/dillon/code/ocaml-gui/assets/config"
   in
   config_string |> Sexplib.Sexp.of_string |> config_file_of_sexp
+;;
+
+type config =
+  { font_size : int
+  ; code_dir : string
+  ; font : Font.t
+  ; launchers : launcher list
+  }
+
+let initialize () =
+  let config_file = parse_config_file () in
+  print_s [%sexp (config_file : config_file)];
+
+  let config_file =
+    match
+      ( Core_unix.Utsname.sysname (Core_unix.uname ())
+      , config_file.mac
+      , config_file.linux )
+    with
+    | "linux", _, Some linux -> linux
+    | "mac", Some mac, _ -> mac
+    | _ -> config_file.global
+  in
+
+  (* set font *)
+  let font = load_font config_file.font_dir in
+  set_texture_filter (Font.texture font) TextureFilter.Trilinear;
+
+  (* verifiy code_dir exists *)
+  if not (SysUtil.file_exists_and_is_dir config_file.code_dir) then
+    failwith
+      (Printf.sprintf "no such code path directory: %s" config_file.code_dir);
+
+  { font_size = config_file.font_size
+  ; code_dir = config_file.code_dir
+  ; font
+  ; launchers = config_file.launchers
+  }
 ;;
