@@ -28,16 +28,17 @@ let ranked_list
     (List.mapi item_score_tuples ~f:(fun i score_tuple ->
        UI.rectangle
          ~layout:Horizontal
+         ~width:(Fixed 800)
          ~color:(if i = current_selection then Color.skyblue else Color.blank)
          [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple)
          ; ( if draw_score then
                UI.text
                  ~padding_all:8
-                 ~align:Right
+                 ~align:Left
                  ~font_size
                  ~font
                  ~text_color:Color.darkpurple
-                 (string_of_float (snd score_tuple))
+                 (snd score_tuple |> int_of_float |> string_of_int)
              else
                UI.empty ()
            )
@@ -68,9 +69,7 @@ let selection (config : Config.config) =
     begin
       let open Key in
       (* ctrl chords *)
-      if
-        Raylib.is_key_down Raylib.Key.Left_control
-        || Raylib.is_key_down Raylib.Key.Right_control
+      if Raylib.is_key_down Raylib.Key.Left_control || Raylib.is_key_down Raylib.Key.Right_control
       then (
         match
           get_key_pressed ()
@@ -124,13 +123,7 @@ let selection (config : Config.config) =
       (* new_text := text; *)
       let x = (get_screen_width () - 500) / 2 in
       new_text
-      := TextBox.draw
-           ~font:config.font
-           ~x_pos:x
-           ~y_pos:5
-           ~width:500
-           ~height:70
-           true
+      := TextBox.draw ~font:config.font ~x_pos:x ~y_pos:5 ~width:500 ~height:70 true
          |> TextArea.IntArray.to_string;
 
       (* ranked file list *)
@@ -155,8 +148,7 @@ let selection (config : Config.config) =
     (* only calculate scores if text changed *)
     if not (phys_equal !new_text !input_text) then (
       input_text := !new_text;
-      dir_ratio_tuples := calculate_scores !input_text dirs
-      (* current_selection := 0 *)
+      dir_ratio_tuples := calculate_scores !input_text dirs (* current_selection := 0 *)
     );
     ();
     loop ()
@@ -181,8 +173,8 @@ let element_list config =
       ~layout:Horizontal
       ~x_position:100
       ~y_position:20
-      ~width:0
-      ~height:0
+      ~width:Fill
+      ~height:Fill
       ~color:Color.darkpurple
       [ rectangle
           ~color:Color.purple
