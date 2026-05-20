@@ -135,7 +135,7 @@ let selection (config : Config.config) =
           ~draw_score:true
           !dir_ratio_tuples
           !current_selection
-        |> UI.calculate_sizes
+        |> UI.fit_sizing
         |> UI.calculate_positions
       in
 
@@ -188,7 +188,7 @@ let element_list config =
           ~padding_all:10
           [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
       ]
-    |> calculate_sizes
+    |> fit_sizing
     |> calculate_positions
     |> render;
 
