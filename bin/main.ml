@@ -189,6 +189,7 @@ let element_list config =
           [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
       ]
     |> fit_sizing
+    |> resolve_grow_sizing
     |> calculate_positions
     |> render;
 

@@ -58,19 +58,19 @@ type axis_sizing =
   ; pad_after : int
   }
 
-let node_extent node axis =
+let node_outer_span node axis =
   match axis with
   | XAxis -> node.width + node.padding.left + node.padding.right
   | YAxis -> node.height + node.padding.top + node.padding.bottom
 ;;
 
-let node_span node axis =
+let node_inner_span node axis =
   match axis with
   | XAxis -> node.width
   | YAxis -> node.height
 ;;
 
-let node_sizing node axis =
+let sizing_for_axis node axis =
   match axis with
   | XAxis -> node.width_sizing
   | YAxis -> node.height_sizing
@@ -133,10 +133,12 @@ let rectangle
 let empty () = rectangle []
 
 let rec fit_sizing node =
-  let sum_axis children axis = List.sum (module Int) children ~f:(fun c -> node_extent c axis) in
+  let sum_axis children axis =
+    List.sum (module Int) children ~f:(fun c -> node_outer_span c axis)
+  in
 
   let max_axis children axis =
-    List.fold children ~init:0 ~f:(fun acc c -> max acc (node_extent c axis))
+    List.fold children ~init:0 ~f:(fun acc c -> max acc (node_outer_span c axis))
   in
 
   match node.kind with
@@ -169,56 +171,65 @@ let rec fit_sizing node =
     { node with width; height; kind = Rectangle { rect with children } }
 ;;
 
-let rec grow_sizing node : node =
-  let grow_align_axis axis node =
+let resolve_grow_sizing node : node =
+  let grow_main_axis axis node =
     match node.kind with
     | Text _ -> node
     | Rectangle rect ->
-      let remaining_space =
-        List.fold rect.children ~init:0 ~f:(fun acc child -> acc + node_extent child axis)
+      let children_outer_span =
+        List.fold rect.children ~init:0 ~f:(fun acc child -> acc + node_outer_span child axis)
       in
-      let num_grow_containers =
+      let remaining_space = node_inner_span node axis - children_outer_span in
+      let grow_child_count =
         List.fold rect.children ~init:0 ~f:(fun acc child ->
-          match node_sizing child axis with
+          match sizing_for_axis child axis with
           | Grow -> acc + 1
           | _ -> acc
         )
       in
-      let grow_by = remaining_space / num_grow_containers in
-      let remainder = Int.rem remaining_space num_grow_containers in
+      if grow_child_count = 0 then
+        node
+      else (
+        let extra_per_grow_child = remaining_space / grow_child_count in
+        let remainder = Int.rem remaining_space grow_child_count in
 
-      let children =
-        List.mapi rect.children ~f:(fun i child ->
-          let span =
-            if i < remainder then
-              (* space divides unevenly so add 1 pixel until we have no more remainder *)
-              node_span child axis + grow_by + 1
-            else
-              node_span child axis + grow_by
-          in
-          match axis with
-          | XAxis -> { child with width = span }
-          | YAxis -> { child with height = span }
-        )
-      in
-      { node with kind = Rectangle { rect with children } }
+        let children =
+          List.folding_map rect.children ~init:0 ~f:(fun grow_index child ->
+            let grow_index, new_span =
+              match sizing_for_axis child axis with
+              | Grow ->
+                let extra_remainder = if grow_index < remainder then 1 else 0 in
+                grow_index + 1, node_inner_span child axis + extra_per_grow_child + extra_remainder
+              | _ -> grow_index, node_inner_span child axis
+            in
+
+            let child =
+              match axis with
+              | XAxis -> { child with width = new_span }
+              | YAxis -> { child with height = new_span }
+            in
+            grow_index, child
+          )
+        in
+        { node with kind = Rectangle { rect with children } }
+      )
   in
 
-  let grow_across_axis axis node =
+  let stretch_cross_axis axis node =
     match node.kind with
     | Text _ -> node
     | Rectangle rect ->
-      let parent_span = node_span node axis in
+      let parent_span = node_inner_span node axis in
       let children =
         List.map rect.children ~f:(fun child ->
-          let span =
-            match node_sizing child axis with
-            | Grow -> max parent_span (node_span child axis)
-            | _ -> node_span child axis
+          let new_span =
+            match sizing_for_axis child axis with
+            | Grow -> max parent_span (node_inner_span child axis)
+            | _ -> node_inner_span child axis
           in
           match axis with
-          | XAxis -> { child with width = span }
-          | YAxis -> { child with height = span }
+          | XAxis -> { child with width = new_span }
+          | YAxis -> { child with height = new_span }
         )
       in
       { node with kind = Rectangle { rect with children } }
@@ -226,8 +237,8 @@ let rec grow_sizing node : node =
 
   (* TODO something for growing the parent node? *)
   match node.layout with
-  | Horizontal -> node |> grow_align_axis XAxis |> grow_across_axis YAxis
-  | Vertical -> node |> grow_align_axis YAxis |> grow_across_axis XAxis
+  | Horizontal -> node |> grow_main_axis XAxis |> stretch_cross_axis YAxis
+  | Vertical -> node |> grow_main_axis YAxis |> stretch_cross_axis XAxis
 ;;
 
 let rec calculate_positions node =
@@ -250,11 +261,11 @@ let rec calculate_positions node =
           match node.layout with
           | Vertical ->
             let child = { child with x_position = x; y_position = y } in
-            let y = y + node_extent child YAxis in
+            let y = y + node_outer_span child YAxis in
             (~x, ~y), child
           | Horizontal ->
             let child = { child with x_position = x; y_position = y } in
-            let x = x + node_extent child XAxis in
+            let x = x + node_outer_span child XAxis in
             (~x, ~y), child
       )
       |> List.map ~f:(fun child -> calculate_positions child)
