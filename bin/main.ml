@@ -34,7 +34,6 @@ let ranked_list
          ; ( if draw_score then
                UI.text
                  ~padding_all:8
-                 ~align:Left
                  ~font_size
                  ~font
                  ~text_color:Color.darkpurple

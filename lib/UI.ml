@@ -5,6 +5,10 @@ type direction =
   | Vertical
   | Horizontal
 
+type axis =
+  | XAxis
+  | YAxis
+
 type sizing =
   | Fixed of int
   | Fill
@@ -41,7 +45,6 @@ and node =
   ; x_position : int
   ; y_position : int
   ; padding : padding
-  ; align : align
   ; kind : node_kind
   }
 
@@ -49,7 +52,6 @@ let text
       ?(font_size = 36)
       ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
       ?padding_all
-      ?(align = Left)
       ?(text_color = Color.black)
       ?(font = get_font_default ())
       text
@@ -66,7 +68,6 @@ let text
   ; padding
   ; x_position = 0
   ; y_position = 0
-  ; align
   ; kind = Text { content = text; font_size; text_color; font }
   }
 ;;
@@ -75,7 +76,6 @@ let rectangle
       ?(layout = Horizontal)
       ?(x_position = 0)
       ?(y_position = 0)
-      ?(align = Left)
       ?(width = Fill)
       ?(height = Fill)
       ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
@@ -96,7 +96,6 @@ let rectangle
   ; padding
   ; x_position
   ; y_position
-  ; align
   ; kind = Rectangle { color; layout; children }
   }
 ;;
@@ -110,43 +109,17 @@ type axis_sizing =
   ; pad_after : int
   }
 
+let node_extent child axis =
+  match axis with
+  | XAxis -> child.width + child.padding.left + child.padding.right
+  | YAxis -> child.height + child.padding.top + child.padding.bottom
+;;
+
 let rec calculate_sizes node =
-  let calculate_fill_size children layout =
-    let aligned_axis_sizing ~align ~across =
-      let align_total_size = align.total + align.size + align.pad_before + align.pad_after in
-      let across_total_size =
-        max across.total (across.size + across.pad_before + across.pad_after)
-      in
-      align_total_size, across_total_size
-    in
+  let sum_axis children axis = List.sum (module Int) children ~f:(fun c -> node_extent c axis) in
 
-    let ~width, ~height =
-      List.fold children ~init:(~width:0, ~height:0) ~f:(fun (~width, ~height) child ->
-        let v_axis =
-          { total = height
-          ; size = child.height
-          ; pad_before = child.padding.top
-          ; pad_after = child.padding.bottom
-          }
-        in
-        let h_axis =
-          { total = width
-          ; size = child.width
-          ; pad_before = child.padding.left
-          ; pad_after = child.padding.right
-          }
-        in
-
-        match layout with
-        | Vertical ->
-          let height, width = aligned_axis_sizing ~align:v_axis ~across:h_axis in
-          ~width, ~height
-        | Horizontal ->
-          let width, height = aligned_axis_sizing ~align:h_axis ~across:v_axis in
-          ~width, ~height
-      )
-    in
-    width, height
+  let max_axis children axis =
+    List.fold children ~init:0 ~f:(fun acc c -> max acc (node_extent c axis))
   in
 
   match node.kind with
@@ -156,22 +129,30 @@ let rec calculate_sizes node =
   | Rectangle rect ->
     let children = List.map rect.children ~f:(fun child -> calculate_sizes child) in
 
-    let width, height =
-      match node.width_sizing, node.height_sizing with
-      | Fixed w, Fixed h -> w, h
-      | Fill, Fill -> calculate_fill_size children rect.layout
-      | Fixed w, Fill ->
-        let _, h = calculate_fill_size children rect.layout in
-        w, h
-      | Fill, Fixed h ->
-        let w, _ = calculate_fill_size children rect.layout in
-        w, h
+    let width =
+      match node.width_sizing with
+      | Fixed w -> w
+      | Fill ->
+        ( match rect.layout with
+          | Vertical -> max_axis children XAxis
+          | Horizontal -> sum_axis children XAxis
+        )
     in
+
+    let height =
+      match node.height_sizing with
+      | Fixed w -> w
+      | Fill ->
+        ( match rect.layout with
+          | Vertical -> sum_axis children YAxis
+          | Horizontal -> max_axis children YAxis
+        )
+    in
+
     { node with width; height; kind = Rectangle { rect with children } }
 ;;
 
 let rec calculate_positions node =
-  (* apply padding, assuming align left and justify top *)
   let node =
     { node with
       x_position = node.x_position + node.padding.left
@@ -181,33 +162,26 @@ let rec calculate_positions node =
 
   match node.kind with
   | Text text -> node
-  | Rectangle rect when List.length rect.children = 0 -> node
   | Rectangle rect ->
     let children =
       List.folding_map
         rect.children
         ~init:(~x:node.x_position, ~y:node.y_position)
         ~f:(fun (~x, ~y) child ->
-          (* alignment / justify *)
-          let child_x =
-            match child.align with
-            | Left -> x
-            | Right -> x + (node.width - child.width)
-          in
-
           (* layout *)
           match rect.layout with
           | Vertical ->
-            let child = { child with x_position = child_x; y_position = y } in
-            let y = y + child.height + child.padding.top + child.padding.bottom in
-
-            (~x, ~y), calculate_positions child
+            let child = { child with x_position = x; y_position = y } in
+            let y = y + node_extent child YAxis in
+            (~x, ~y), child
           | Horizontal ->
-            let child = { child with x_position = child_x; y_position = y } in
-            let x = x + child.width + child.padding.left + child.padding.right in
-            (~x, ~y), calculate_positions child
+            let child = { child with x_position = x; y_position = y } in
+            let x = x + node_extent child XAxis in
+            (~x, ~y), child
       )
+      |> List.map ~f:(fun child -> calculate_positions child)
     in
+
     { node with kind = Rectangle { rect with children } }
 ;;
 
