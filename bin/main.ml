@@ -28,9 +28,9 @@ let ranked_list
     (List.mapi item_score_tuples ~f:(fun i score_tuple ->
        UI.rectangle
          ~layout:Horizontal
-         ~width:(Fixed 800)
+         ~width:Grow
          ~color:(if i = current_selection then Color.skyblue else Color.blank)
-         [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple)
+         [ UI.rectangle ~width:Grow [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple) ]
          ; ( if draw_score then
                UI.text
                  ~padding_all:8
@@ -136,6 +136,7 @@ let selection (config : Config.config) =
           !dir_ratio_tuples
           !current_selection
         |> UI.fit_sizing
+        |> UI.grow_sizing
         |> UI.calculate_positions
       in
 
@@ -189,7 +190,7 @@ let element_list config =
           [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
       ]
     |> fit_sizing
-    |> resolve_grow_sizing
+    |> grow_sizing
     |> calculate_positions
     |> render;
 
