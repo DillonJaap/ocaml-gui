@@ -3,8 +3,10 @@
 	(code_dir "/home/dillon/code")
 	(font_dir "/home/dillon/code/ocaml-gui/assets/SpaceMono-Regular.ttf")
 	(launchers 
-	 (((path "/home/dillon/.nix-profile/bin/neovide") (args ("neovide" "--chdir")))
-		((path "/usr/bin/kitty") (args ("kitty" "--directory"))))))
+	 (
+		((path "/usr/bin/kitty") (args ("kitty" "--directory")))
+		((path "/home/dillon/.nix-profile/bin/neovide") (args ("neovide" "--chdir")))
+		)))
 
  (linux
 	((font_size 36)
@@ -12,8 +14,9 @@
 	 (font_dir "/home/dillon/code/ocaml-gui/assets/SpaceMono-Regular.ttf")
 	 (launchers 
 		(
+		 ((path "/usr/bin/kitty") (args ("kitty" "--directory")))
 		 ((path "/home/dillon/.nix-profile/bin/neovide") (args ("neovide" "--chdir")))
-		 ((path "/usr/bin/kitty") (args ("kitty" "--directory")))))))
+		 ))))
 
  (mac 
 	((font_size 36)
@@ -21,6 +24,7 @@
 	 (font_dir "/home/dillon/code/ocaml-gui/assets/SpaceMono-Regular.ttf")
 	 (launchers 
 		(
+		 ((path "/usr/bin/kitty") (args ("kitty" "--directory")))
 		 ((path "/home/dillon/.nix-profile/bin/neovide") (args ("neovide" "--chdir")))
-		 ((path "/usr/bin/kitty") (args ("kitty" "--directory")))))))
+		 ))))
  )

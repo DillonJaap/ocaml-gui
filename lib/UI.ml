@@ -231,7 +231,6 @@ let rec grow_sizing node : node =
             | Grow -> max parent_span (node_inner_span child axis)
             | _ -> node_inner_span child axis
           in
-          print_endline (new_span |> string_of_int);
 
           let child =
             match axis with
