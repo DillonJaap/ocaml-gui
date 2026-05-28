@@ -21,16 +21,16 @@ let ranked_list
       item_score_tuples
       current_selection
   =
-  UI.rectangle
+  UI.container
     ~layout:Vertical
     ~x_position
     ~y_position
     (List.mapi item_score_tuples ~f:(fun i score_tuple ->
-       UI.rectangle
+       UI.container
          ~layout:Horizontal
          ~width:Grow
          ~color:(if i = current_selection then Color.skyblue else Color.blank)
-         [ UI.rectangle ~width:Grow [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple) ]
+         [ UI.container ~width:Grow [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple) ]
          ; ( if draw_score then
                UI.text
                  ~padding_all:8
@@ -126,21 +126,15 @@ let selection (config : Config.config) =
          |> TextArea.IntArray.to_string;
 
       (* ranked file list *)
-      let rl =
-        ranked_list
-          ~x_position:(x - 100)
-          ~y_position:100
-          ~font:config.font
-          ~font_size:36
-          ~draw_score:true
-          !dir_ratio_tuples
-          !current_selection
-        |> UI.fit_sizing
-        |> UI.grow_sizing
-        |> UI.calculate_positions
-      in
-
-      rl |> UI.render;
+      ranked_list
+        ~x_position:(x - 100)
+        ~y_position:100
+        ~font:config.font
+        ~font_size:36
+        ~draw_score:true
+        !dir_ratio_tuples
+        !current_selection
+      |> UI.draw;
 
       end_drawing ()
     end;
@@ -169,30 +163,27 @@ let element_list config =
 
     (* draw tree *)
     let open UI in
-    rectangle
+    container
       ~layout:Horizontal
       ~x_position:100
       ~y_position:20
       ~width:Fill
       ~height:Fill
       ~color:Color.darkpurple
-      [ rectangle
+      [ container
           ~color:Color.purple
           ~padding_all:10
           [ text ~text_color:Color.gold "this is an item in a list" ]
-      ; rectangle
+      ; container
           ~color:Color.purple
           ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
           [ text ~text_color:Color.gold "this is an item in the list" ]
-      ; rectangle
+      ; container
           ~color:Color.purple
           ~padding_all:10
           [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
       ]
-    |> fit_sizing
-    |> grow_sizing
-    |> calculate_positions
-    |> render;
+    |> UI.draw;
 
     end_drawing ();
     loop ()

@@ -25,13 +25,13 @@ type padding =
   ; bottom : int
   }
 
-type rectangle_type =
+type container_type =
   { color : Raylib.Color.t
   ; children : node list
   }
 
 and node_kind =
-  | Rectangle of rectangle_type
+  | Container of container_type
   | Text of
       { content : string
       ; font_size : int
@@ -101,7 +101,7 @@ let text
   }
 ;;
 
-let rectangle
+let container
       ?(layout = Horizontal)
       ?(x_position = 0)
       ?(y_position = 0)
@@ -126,11 +126,11 @@ let rectangle
   ; x_position
   ; y_position
   ; layout
-  ; kind = Rectangle { color; children }
+  ; kind = Container { color; children }
   }
 ;;
 
-let empty () = rectangle []
+let empty () = container []
 
 let rec fit_sizing node =
   let sum_axis children axis =
@@ -145,7 +145,7 @@ let rec fit_sizing node =
   | Text text ->
     let size = measure_text_ex text.font text.content (float_of_int text.font_size) 0.0 in
     { node with width = Vector2.x size |> int_of_float; height = Vector2.y size |> int_of_float }
-  | Rectangle rect ->
+  | Container rect ->
     let children = List.map rect.children ~f:(fun child -> fit_sizing child) in
 
     let width =
@@ -168,14 +168,14 @@ let rec fit_sizing node =
         )
     in
 
-    { node with width; height; kind = Rectangle { rect with children } }
+    { node with width; height; kind = Container { rect with children } }
 ;;
 
 let rec grow_sizing node : node =
   let grow_main_axis axis node =
     match node.kind with
     | Text _ -> node
-    | Rectangle rect ->
+    | Container rect ->
       let children_outer_span =
         List.fold rect.children ~init:0 ~f:(fun acc child -> acc + node_outer_span child axis)
       in
@@ -216,13 +216,13 @@ let rec grow_sizing node : node =
         )
       in
 
-      { node with kind = Rectangle { rect with children } }
+      { node with kind = Container { rect with children } }
   in
 
   let stretch_cross_axis axis node =
     match node.kind with
     | Text _ -> node
-    | Rectangle rect ->
+    | Container rect ->
       let parent_span = node_inner_span node axis in
       let children =
         List.map rect.children ~f:(fun child ->
@@ -240,7 +240,7 @@ let rec grow_sizing node : node =
           grow_sizing child
         )
       in
-      { node with kind = Rectangle { rect with children } }
+      { node with kind = Container { rect with children } }
   in
 
   (* TODO something for growing the parent node? *)
@@ -259,7 +259,7 @@ let rec calculate_positions node =
 
   match node.kind with
   | Text text -> node
-  | Rectangle rect ->
+  | Container rect ->
     let children =
       List.folding_map
         rect.children
@@ -279,12 +279,12 @@ let rec calculate_positions node =
       |> List.map ~f:(fun child -> calculate_positions child)
     in
 
-    { node with kind = Rectangle { rect with children } }
+    { node with kind = Container { rect with children } }
 ;;
 
 let rec render node =
   match node.kind with
-  | Rectangle rect ->
+  | Container rect ->
     draw_rectangle node.x_position node.y_position node.width node.height rect.color;
     List.iter rect.children ~f:(fun child -> render child)
   | Text text ->
@@ -296,3 +296,7 @@ let rec render node =
       0.0
       text.text_color
 ;;
+
+let draw root = root |> fit_sizing |> grow_sizing |> calculate_positions |> render
+
+let init ?(window_width=1200) ?(window_height=800) =
