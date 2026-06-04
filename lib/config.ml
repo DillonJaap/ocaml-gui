@@ -45,9 +45,17 @@ let config_file_of_sexp sexp =
 ;;
 
 let parse_config_file () =
-  let config_string =
-    In_channel.read_all "/home/dillon/code/ocaml-gui/assets/config"
+  print_endline "OS:";
+  print_endline (Core_unix.Utsname.sysname (Core_unix.uname ()));
+
+  let file_path =
+    match Core_unix.Utsname.sysname (Core_unix.uname ()) with
+    | "linux" -> "/home/dillon/code/ocaml-gui/assets/config"
+    | "Darwin" -> "/Users/DJaap/code/personal/ocaml/gui/assets/config"
+    | _ -> failwith "unknonw OS for config file path"
   in
+
+  let config_string = In_channel.read_all file_path in
   config_string |> Sexplib.Sexp.of_string |> config_file_of_sexp
 ;;
 
@@ -63,13 +71,9 @@ let initialize () =
   print_s [%sexp (config_file : config_file)];
 
   let config_file =
-    match
-      ( Core_unix.Utsname.sysname (Core_unix.uname ())
-      , config_file.mac
-      , config_file.linux )
-    with
+    match Core_unix.Utsname.sysname (Core_unix.uname ()), config_file.mac, config_file.linux with
     | "linux", _, Some linux -> linux
-    | "mac", Some mac, _ -> mac
+    | "Darwin", Some mac, _ -> mac
     | _ -> config_file.global
   in
 
@@ -79,8 +83,7 @@ let initialize () =
 
   (* verifiy code_dir exists *)
   if not (SysUtil.file_exists_and_is_dir config_file.code_dir) then
-    failwith
-      (Printf.sprintf "no such code path directory: %s" config_file.code_dir);
+    failwith (Printf.sprintf "no such code path directory: %s" config_file.code_dir);
 
   { font_size = config_file.font_size
   ; code_dir = config_file.code_dir
