@@ -299,4 +299,17 @@ let rec render node =
 
 let draw root = root |> fit_sizing |> grow_sizing |> calculate_positions |> render
 
-let init ?(window_width=1200) ?(window_height=800) =
+let init ?(window_width = 1200) ?(window_height = 800) () =
+  init_window window_width window_height "Project Launcher";
+
+  (* theoretically center the window *)
+  set_window_position
+    ((get_screen_width () - window_width) / 2)
+    ((get_screen_height () - window_height) / 2);
+
+  (* target FPS *)
+  set_target_fps 60;
+
+  (* remove window decoration *)
+  set_window_state [ ConfigFlags.Window_undecorated ]
+;;

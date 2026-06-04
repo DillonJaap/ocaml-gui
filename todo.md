@@ -45,6 +45,7 @@
 - [ ] min/max width/height
 - [ ] text wrapping
 - [ ] grow containers account for text?
+- [ ] child gap
 
 # code clean up
 - [x] refactor node type make text nodes just be a field on the record (string option)
