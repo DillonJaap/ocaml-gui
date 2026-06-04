@@ -16,8 +16,8 @@
 		 ((path "/usr/bin/kitty") (args ("kitty" "--directory")))))))
 
  (mac 
-	((font_size 36)
-	 (code_dir "/User/DJaap/code")
+	((font_size 24)
+	 (code_dir "/Users/DJaap/code")
 	 (font_dir "/Users/DJaap/code/personal/ocaml/gui/assets/SpaceMono-Regular.ttf")
 	 (launchers 
 		(
