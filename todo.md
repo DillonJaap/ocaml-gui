@@ -37,6 +37,16 @@
 - [ ] figure out base datastructure for the text (int array, carray, custom, from library? etc...)
 - [ ] datastructure for text box (finger trees?)
 
+## UI layout / UI events
+- [ ] overflow hidden
+- [ ] scrolling/overflow scroll
+- [ ] button clicks
+- [ ] Dom events?
+- [ ] min/max width/height
+- [ ] text wrapping
+- [ ] grow containers account for text?
+- [ ] child gap
+
 # code clean up
 - [x] refactor node type make text nodes just be a field on the record (string option)
 - [ ] calculate functions don't calculate sizes/positions of their children directly do a recursive call, if this even makes sense to do?

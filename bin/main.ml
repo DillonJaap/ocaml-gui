@@ -21,16 +21,16 @@ let ranked_list
       item_score_tuples
       current_selection
   =
-  UI.rectangle
+  UI.container
     ~layout:Vertical
     ~x_position
     ~y_position
     (List.mapi item_score_tuples ~f:(fun i score_tuple ->
-       UI.rectangle
+       UI.container
          ~layout:Horizontal
          ~width:Grow
          ~color:(if i = current_selection then Color.skyblue else Color.blank)
-         [ UI.rectangle ~width:Grow [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple) ]
+         [ UI.container ~width:Grow [ UI.text ~padding_all:8 ~font_size ~font (fst score_tuple) ]
          ; ( if draw_score then
                UI.text
                  ~padding_all:8
@@ -122,25 +122,26 @@ let selection (config : Config.config) =
       (* new_text := text; *)
       let x = (get_screen_width () - 500) / 2 in
       new_text
-      := TextBox.draw ~font:config.font ~x_pos:x ~y_pos:5 ~width:500 ~height:70 true
+      := TextBox.draw
+           ~font:config.font
+           ~font_size:(config.font_size |> float_of_int)
+           ~x_pos:x
+           ~y_pos:5
+           ~width:400
+           ~height:35
+           true
          |> TextArea.IntArray.to_string;
 
       (* ranked file list *)
-      let rl =
-        ranked_list
-          ~x_position:(x - 100)
-          ~y_position:100
-          ~font:config.font
-          ~font_size:36
-          ~draw_score:true
-          !dir_ratio_tuples
-          !current_selection
-        |> UI.fit_sizing
-        |> UI.grow_sizing
-        |> UI.calculate_positions
-      in
-
-      rl |> UI.render;
+      ranked_list
+        ~x_position:(x - 100)
+        ~y_position:100
+        ~font:config.font
+        ~font_size:config.font_size
+        ~draw_score:true
+        !dir_ratio_tuples
+        !current_selection
+      |> UI.draw;
 
       end_drawing ()
     end;
@@ -156,73 +157,8 @@ let selection (config : Config.config) =
   loop ()
 ;;
 
-let element_list config =
-  let rec loop () =
-    (* close window and exit loop *)
-    if window_should_close () then (
-      close_window ();
-      exit 0
-    );
-
-    begin_drawing ();
-    clear_background Color.darkgray;
-
-    (* draw tree *)
-    let open UI in
-    rectangle
-      ~layout:Horizontal
-      ~x_position:100
-      ~y_position:20
-      ~width:Fill
-      ~height:Fill
-      ~color:Color.darkpurple
-      [ rectangle
-          ~color:Color.purple
-          ~padding_all:10
-          [ text ~text_color:Color.gold "this is an item in a list" ]
-      ; rectangle
-          ~color:Color.purple
-          ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
-          [ text ~text_color:Color.gold "this is an item in the list" ]
-      ; rectangle
-          ~color:Color.purple
-          ~padding_all:10
-          [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
-      ]
-    |> fit_sizing
-    |> grow_sizing
-    |> calculate_positions
-    |> render;
-
-    end_drawing ();
-    loop ()
-  in
-  loop ()
-;;
-
-let setup () =
-  let window_width = 1200 in
-  let window_height = 800 in
-
-  init_window window_width window_height "Project Launcher";
-
-  (* theoretically center the window *)
-  set_window_position
-    ((get_screen_width () - window_width) / 2)
-    ((get_screen_height () - window_height) / 2);
-
-  (* target FPS *)
-  set_target_fps 60;
-
-  (* Set text size to 24px for ALL controls *)
-  Raygui.set_style (Raygui.Control.Default `Text_size) 22;
-
-  (* remove window decoration *)
-  set_window_state [ ConfigFlags.Window_undecorated ]
-;;
-
 let () =
-  setup ();
+  UI.init ();
   let config = Config.initialize () in
   (* element_list config *)
   selection config

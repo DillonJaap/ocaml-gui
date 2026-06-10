@@ -1,6 +1,15 @@
 (executable
  (public_name gui)
  (name main)
+ (modules main)
+ (libraries gui core raylib raygui core_unix spawn)
+ (preprocess
+  (pps ppx_jane)))
+
+(executable
+ (public_name el_list)
+ (name el_list)
+ (modules el_list)
  (libraries gui core raylib raygui core_unix spawn)
  (preprocess
   (pps ppx_jane)))
