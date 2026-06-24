@@ -58,12 +58,14 @@ type axis_sizing =
   ; pad_after : int
   }
 
+(** [node_outer_span node axis] get the sizing of the [node] along the specified [axis] plus the padding *)
 let node_outer_span node axis =
   match axis with
   | XAxis -> node.width + node.padding.left + node.padding.right
   | YAxis -> node.height + node.padding.top + node.padding.bottom
 ;;
 
+(** [node_inner_span node axis] get the sizing of the [node] along the specified [axis] not including the padding *)
 let node_inner_span node axis =
   match axis with
   | XAxis -> node.width

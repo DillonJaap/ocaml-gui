@@ -21,28 +21,31 @@ module type TextEditor = sig
 end
 
 module IntArray = struct
-  let insert text text_to_insert pos =
-    if pos = Array.length !text then
-      text := Array.append !text text_to_insert
-    else begin
-      let new_text =
-        Array.create 0 ~len:(Array.length !text + Array.length text_to_insert)
-      in
-      Array.blit ~src:!text ~dst:new_text ~src_pos:0 ~dst_pos:0 ~len:pos;
+  (** inserts the [to_insert] array at the specified position [pos] in the [array]*)
+  let insert array to_insert pos =
+    if pos = Array.length !array then
+      array := Array.append !array to_insert
+    else (
+      (* new array of the needed size *)
+      let new_array = Array.create 0 ~len:(Array.length !array + Array.length to_insert) in
+
+      (* insert begining of array into our new array *)
+      Array.blit ~src:!array ~dst:new_array ~src_pos:0 ~dst_pos:0 ~len:pos;
+
+      (* insert our 'to_insert' text into the middle of the new array*)
+      Array.blit ~src:to_insert ~dst:new_array ~src_pos:0 ~dst_pos:pos ~len:(Array.length to_insert);
+
+      (* insert end of array into our new array *)
       Array.blit
-        ~src:text_to_insert
-        ~dst:new_text
-        ~src_pos:0
-        ~dst_pos:pos
-        ~len:(Array.length text_to_insert);
-      Array.blit
-        ~src:!text
-        ~dst:new_text
+        ~src:!array
+        ~dst:new_array
         ~src_pos:pos
-        ~dst_pos:(pos + Array.length text_to_insert)
-        ~len:(Array.length !text - pos);
-      text := new_text
-    end
+        ~dst_pos:(pos + Array.length to_insert)
+        ~len:(Array.length !array - pos);
+
+      (* update array ref to reference our new array *)
+      array := new_array
+    )
   ;;
 
   let delete text start_pos end_pos =
@@ -60,8 +63,9 @@ module IntArray = struct
     text := new_data
   ;;
 
-  let to_carray text =
-    let list = List.of_array text in
+  (** Converts an [array] into a C array *)
+  let to_carray array =
+    let list = List.of_array array in
     Ctypes.CArray.of_list Ctypes.int list
   ;;
 
