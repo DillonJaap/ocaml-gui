@@ -5,7 +5,7 @@ open Raylib
 let calculate_scores input_text file_paths =
   file_paths
   |> List.map ~f:(fun elt ->
-    (* only test against the last folder name and not the full path *)
+    (* only compare against the last folder name and not the full path *)
     let file_name = elt |> String.split ~on:'/' |> List.rev |> List.hd_exn in
     elt, Scoring.smith_waterman input_text file_name
   )
@@ -116,10 +116,6 @@ let selection (config : Config.config) =
       begin_drawing ();
       clear_background Color.lightgray;
 
-      (* text box *)
-      (* let rect = Rectangle.create x 5.0 500.0 70.0 in *)
-      (* let text, _ = Raygui.text_box rect (pad_input !input_text) true in *)
-      (* new_text := text; *)
       let x = (get_screen_width () - 500) / 2 in
       new_text
       := TextBox.draw

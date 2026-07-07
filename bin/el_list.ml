@@ -27,9 +27,10 @@ let element_list config =
           ~padding_all:10
           [ text ~text_color:Color.gold "this is an item in a list" ]
       ; container
+          ~id:"foo"
           ~color:Color.purple
           ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
-          [ text ~text_color:Color.gold "this is an item in the list" ]
+          [ text ~text_color:Color.gold "This should be clickable" ]
       ; container
           ~color:Color.purple
           ~padding_all:10

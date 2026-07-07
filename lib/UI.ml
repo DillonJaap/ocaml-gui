@@ -1,6 +1,10 @@
 open Raylib
 open Core
 
+module Events = struct
+  type click = int
+end
+
 type direction =
   | Vertical
   | Horizontal
@@ -49,6 +53,7 @@ and node =
   ; layout : direction
   ; padding : padding
   ; kind : node_kind
+  ; id : string option
   }
 
 type axis_sizing =
@@ -100,10 +105,12 @@ let text
   ; y_position = 0
   ; layout = Horizontal
   ; kind = Text { content = text; font_size; text_color; font }
+  ; id = None
   }
 ;;
 
 let container
+      ?id
       ?(layout = Horizontal)
       ?(x_position = 0)
       ?(y_position = 0)
@@ -129,6 +136,7 @@ let container
   ; y_position
   ; layout
   ; kind = Container { color; children }
+  ; id
   }
 ;;
 
@@ -299,7 +307,40 @@ let rec render node =
       text.text_color
 ;;
 
-let draw root = root |> fit_sizing |> grow_sizing |> calculate_positions |> render
+let rec handle_mouse node =
+  let is_mouse_in_container node =
+    let mx = get_mouse_x () in
+    let my = get_mouse_y () in
+
+    let left = node.x_position in
+    let right = node.x_position + node.width in
+    let top = node.y_position in
+    let bottom = node.y_position + node.height in
+
+    mx >= left && mx <= right && my >= top && my <= bottom
+  in
+
+  match node.kind, node.id with
+  | Container container, Some id ->
+    if is_mouse_button_pressed MouseButton.Left then
+      if is_mouse_in_container node then
+        printf "Wow you Inside clicked: %s\n" id
+      else
+        print_endline "you clicked nothing :("
+  | _, _ ->
+    ();
+
+    ( match node.kind with
+      | Container container -> List.iter container.children ~f:(fun child -> handle_mouse child)
+      | Text _ -> ()
+    )
+;;
+
+let draw root =
+  let tree = root |> fit_sizing |> grow_sizing |> calculate_positions in
+  handle_mouse tree;
+  render tree
+;;
 
 let init ?(window_width = 1200) ?(window_height = 800) () =
   init_window window_width window_height "Project Launcher";
