@@ -36,7 +36,7 @@ let element_list config =
           ~padding_all:10
           [ text ~text_color:Color.gold ~padding_all:4 "short text" ]
       ]
-    |> UI.draw;
+    |> draw;
 
     end_drawing ();
     loop ()
