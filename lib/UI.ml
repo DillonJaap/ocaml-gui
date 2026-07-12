@@ -33,14 +33,14 @@ module UI = struct
     ; bottom : int
     }
 
-  type container_type =
+  type 'a container_type =
     { color : Raylib.Color.t
-    ; children : node list
-    ; on_click : string option
+    ; children : 'a node list
+    ; on_click : 'a option
     }
 
-  and node_kind =
-    | Container of container_type
+  and 'a node_kind =
+    | Container of 'a container_type
     | Text of
         { content : string
         ; font_size : int
@@ -48,7 +48,7 @@ module UI = struct
         ; font : Font.t
         }
 
-  and node =
+  and 'a node =
     { width_sizing : sizing
     ; height_sizing : sizing
     ; width : int
@@ -57,7 +57,7 @@ module UI = struct
     ; y_position : int
     ; layout : direction
     ; padding : padding
-    ; kind : node_kind
+    ; kind : 'a node_kind
     ; id : string option
     }
 
@@ -127,7 +127,7 @@ module UI = struct
       { node with width; height; kind = Container { rect with children } }
   ;;
 
-  let rec grow_sizing node : node =
+  let rec grow_sizing node : 'a node =
     let grow_main_axis axis node =
       match node.kind with
       | Text _ -> node
@@ -330,7 +330,7 @@ let container
       ?(padding = { left = 0; right = 0; top = 0; bottom = 0 })
       ?padding_all
       ?(color = Color.blank)
-      ?(on_click = None)
+      ?on_click
       children
   =
   let padding =

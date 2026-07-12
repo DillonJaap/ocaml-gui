@@ -2,6 +2,8 @@ open Gui
 open Core
 open Raylib
 
+type msg = UserClickedButton
+
 let element_list config =
   let rec loop () =
     (* close window and exit loop *)
@@ -30,6 +32,7 @@ let element_list config =
           ~id:"foo"
           ~color:Color.purple
           ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
+          ~on_click:UserClickedButton
           [ text ~text_color:Color.gold "This should be clickable" ]
       ; container
           ~color:Color.purple
