@@ -354,7 +354,7 @@ let container
 
 let empty () = container []
 
-let init ?(window_width = 1200) ?(window_height = 800) () =
+let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
   init_window window_width window_height "Project Launcher";
 
   (* theoretically center the window *)
@@ -363,7 +363,25 @@ let init ?(window_width = 1200) ?(window_height = 800) () =
     ((get_screen_height () - window_height) / 2);
 
   (* target FPS *)
-  set_target_fps 60
-;;
+  set_target_fps 60;
 
-(* remove window decoration *)
+  (* init *)
+  let model = init () in
+
+  (* loop *)
+  let rec loop model =
+    (* close window and exit loop *)
+    if window_should_close () then (
+      close_window ();
+      exit 0
+    );
+
+    begin_drawing ();
+    view model |> draw;
+    let model = update NoMsg model in
+    end_drawing ();
+
+    loop model
+  in
+  loop model
+;;

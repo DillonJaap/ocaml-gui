@@ -154,7 +154,7 @@ let selection (config : Config.config) =
 ;;
 
 let () =
-  UI.init ();
+  (* UI.start ~init:(fun () -> ()) ~update:(fun () -> ()) ~view:(fun () -> ()) (); *)
   let config = Config.initialize () in
   (* element_list config *)
   selection config
