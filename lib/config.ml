@@ -1,6 +1,5 @@
 open Sexplib.Std
 open Core
-open Raylib
 
 type launcher =
   { path : string
@@ -50,9 +49,9 @@ let parse_config_file () =
 
   let file_path =
     match Core_unix.Utsname.sysname (Core_unix.uname ()) with
-    | "linux" -> "/home/dillon/code/ocaml-gui/assets/config"
+    | "Linux" -> "/home/dillon/code/ocaml-gui/assets/config"
     | "Darwin" -> "/Users/DJaap/code/personal/ocaml/gui/assets/config"
-    | _ -> failwith "unknonw OS for config file path"
+    | _ -> failwith "unknown OS for config file path"
   in
 
   let config_string = In_channel.read_all file_path in
@@ -62,7 +61,7 @@ let parse_config_file () =
 type config =
   { font_size : int
   ; code_dir : string
-  ; font : Font.t
+  ; font : string
   ; launchers : launcher list
   }
 
@@ -77,17 +76,13 @@ let initialize () =
     | _ -> config_file.global
   in
 
-  (* set font *)
-  let font = load_font config_file.font_dir in
-  set_texture_filter (Font.texture font) TextureFilter.Trilinear;
-
   (* verifiy code_dir exists *)
   if not (SysUtil.file_exists_and_is_dir config_file.code_dir) then
     failwith (Printf.sprintf "no such code path directory: %s" config_file.code_dir);
 
   { font_size = config_file.font_size
   ; code_dir = config_file.code_dir
-  ; font
+  ; font = config_file.font_dir
   ; launchers = config_file.launchers
   }
 ;;

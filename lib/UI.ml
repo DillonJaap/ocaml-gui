@@ -3,11 +3,6 @@ open Core
 
 type msg = UserClickedColorSwap
 
-module Event = struct
-  type 'a t = 'a
-  type 'a event_queue = 'a t Queue.t
-end
-
 module UI = struct
   type direction =
     | Vertical
@@ -256,7 +251,7 @@ module UI = struct
   let calculate_tree root = root |> fit_sizing |> grow_sizing |> calculate_positions
 end
 
-let rec handle_mouse node =
+let rec handle_mouse node queue =
   let open UI in
   let is_mouse_in_container node =
     let mx = get_mouse_x () in
@@ -270,29 +265,20 @@ let rec handle_mouse node =
     mx >= left && mx <= right && my >= top && my <= bottom
   in
 
-  match node.kind, node.id with
-  | Container container, Some id ->
-    if is_mouse_button_pressed MouseButton.Left then
-      if is_mouse_in_container node then
-        printf "Wow you Inside clicked: %s\n" id
-      else
-        print_endline "you clicked nothing :("
-  | _, _ ->
-    ();
+  let _ =
+    match node.kind, node.id with
+    | Container { color; children; on_click = Some msg }, Some id ->
+      if is_mouse_button_pressed MouseButton.Left && is_mouse_in_container node then
+        Queue.enqueue queue msg
+    | _, _ -> ()
+  in
 
-    ( match node.kind with
-      | Container container -> List.iter container.children ~f:(fun child -> handle_mouse child)
-      | Text _ -> ()
-    )
+  match node.kind with
+  | Container container -> List.iter container.children ~f:(fun child -> handle_mouse child queue)
+  | Text _ -> ()
 ;;
 
 open UI
-
-let draw root =
-  let tree = calculate_tree root in
-  handle_mouse tree;
-  render tree
-;;
 
 let text
       ?(font_size = 36)
@@ -357,6 +343,10 @@ let empty () = container []
 let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
   init_window window_width window_height "Project Launcher";
 
+  let config = Config.initialize () in
+  let font = load_font config.font in
+  set_texture_filter (Font.texture font) TextureFilter.Trilinear;
+
   (* theoretically center the window *)
   set_window_position
     ((get_screen_width () - window_width) / 2)
@@ -368,6 +358,8 @@ let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
   (* init *)
   let model = init () in
 
+  let queue : 'a Queue.t = Queue.create () in
+
   (* loop *)
   let rec loop model =
     (* close window and exit loop *)
@@ -377,8 +369,16 @@ let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
     );
 
     begin_drawing ();
-    view model |> draw;
-    let model = update NoMsg model in
+    let tree = view model |> calculate_tree in
+
+    handle_mouse tree queue;
+    render tree;
+
+    let model =
+      match Queue.dequeue queue with
+      | Some msg -> update msg model
+      | None -> model
+    in
     end_drawing ();
 
     loop model

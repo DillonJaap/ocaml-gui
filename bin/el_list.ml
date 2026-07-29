@@ -2,14 +2,8 @@ open Gui
 open Core
 open Raylib
 
-type msg =
-  | UserClickedButton
-  | NoMsg
-
-type model =
-  { color : Color.t
-  ; config : Config.config
-  }
+type msg = UserClickedButton
+type model = { color : Color.t }
 
 let view (model : model) =
   (* close window and exit loop *)
@@ -28,7 +22,6 @@ let view (model : model) =
         ~padding_all:10
         [ text ~text_color:Color.gold "this is an item in a list" ]
     ; container
-        ~id:"foo"
         ~color:model.color
         ~padding:{ left = 20; right = 20; top = 20; bottom = 20 }
         ~on_click:UserClickedButton
@@ -42,16 +35,14 @@ let view (model : model) =
 
 let update msg model =
   match msg with
-  | UserClickedButton -> { model with color = Color.purple }
-  | NoMsg -> { model with color = Color.purple }
+  | UserClickedButton -> { color = Color.green }
 ;;
 
 let () =
-  let config = Config.initialize () in
   UI.start
     ~init:(fun () ->
       print_endline "we are init in the start function";
-      { color = Color.purple; config }
+      { color = Color.purple }
     )
     ~update
     ~view
