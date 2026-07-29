@@ -1,0 +1,38 @@
+(version 2.2.1)
+
+(build
+ (all_platforms
+  ((action
+    (progn
+     (when %{pkg-self:dev} (run dune subst))
+     (run dune build -p %{pkg-self:name} -j %{jobs} @install))))))
+
+(depends
+ (choice
+  ((((arch x86_64)
+     (os linux))
+    ((arch arm64)
+     (os linux)))
+   (dune
+    ocaml
+    dune-configurator
+    ctypes
+    integers
+    patch
+    conf-mesa
+    conf-libxcursor
+    conf-libxi
+    conf-libxinerama
+    conf-libxrandr))
+  ((((arch x86_64)
+     (os macos))
+    ((arch arm64)
+     (os macos)))
+   (dune ocaml dune-configurator ctypes integers patch))))
+
+(source
+ (fetch
+  (url
+   https://github.com/tjammer/raylib-ocaml/releases/download/2.2.1/raylib-2.2.1.tbz)
+  (checksum
+   sha512=8e3f23c7134a2a400ea2b9698155a64cfc4f3a157ddbab81f73aa6d46212753badd706bb890851c5ac0d70c3f7e52fbed4ce148b8e68fc3df3108ea14cd8aab1)))
