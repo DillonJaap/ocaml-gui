@@ -358,7 +358,7 @@ let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
   (* init *)
   let model = init () in
 
-  let queue : 'a Queue.t = Queue.create () in
+  let event_queue : 'a Queue.t = Queue.create () in
 
   (* loop *)
   let rec loop model =
@@ -371,11 +371,11 @@ let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
     begin_drawing ();
     let tree = view model |> calculate_tree in
 
-    handle_mouse tree queue;
+    handle_mouse tree event_queue;
     render tree;
 
     let model =
-      match Queue.dequeue queue with
+      match Queue.dequeue event_queue with
       | Some msg -> update msg model
       | None -> model
     in
