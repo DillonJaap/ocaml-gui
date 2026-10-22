@@ -6,3 +6,12 @@ if-then-else=fit-or-vertical
 break-before-in=fit-or-vertical
 indicate-multiline-delimiters=closing-on-separate-line
 #let-binding-spacing=sparse
+
+# indentation — pinned explicitly (janestreet profile sets these to 2)
+cases-exp-indent = 1
+extension-indent = 1
+function-indent = 1
+let-binding-indent = 1
+module-indent = 1
+stritem-extension-indent = 1
+type-decl-indent = 1
