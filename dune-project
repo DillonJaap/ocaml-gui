@@ -21,8 +21,6 @@
  (description "A longer description")
  (depends
   ocaml
-  core
-  core_unix
   raylib
   raygui
   spawn

@@ -1,6 +1,6 @@
 open Gui
-open Core
 open Raylib
+open StdLabels
 
 type msg = UserClickedButton
 type model = { color : Color.t }

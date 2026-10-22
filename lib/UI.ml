@@ -1,5 +1,5 @@
 open Raylib
-open Core
+open StdLabels
 
 type msg = UserClickedColorSwap
 
@@ -85,11 +85,11 @@ module UI = struct
 
   let rec fit_sizing node =
     let sum_axis children axis =
-      List.sum (module Int) children ~f:(fun c -> node_outer_span c axis)
+      List.fold_left children ~init:0 ~f:(fun acc c -> node_outer_span c axis + acc)
     in
 
     let max_axis children axis =
-      List.fold children ~init:0 ~f:(fun acc c -> max acc (node_outer_span c axis))
+      List.fold_left children ~init:0 ~f:(fun acc c -> max acc (node_outer_span c axis))
     in
 
     match node.kind with
@@ -128,13 +128,13 @@ module UI = struct
       | Text _ -> node
       | Container rect ->
         let children_outer_span =
-          List.fold rect.children ~init:0 ~f:(fun acc child -> acc + node_outer_span child axis)
+          List.fold_left rect.children ~init:0 ~f:(fun acc child -> acc + node_outer_span child axis)
         in
 
         let remaining_space = node_inner_span node axis - children_outer_span in
 
         let grow_child_count =
-          List.fold rect.children ~init:0 ~f:(fun acc child ->
+          List.fold_left rect.children ~init:0 ~f:(fun acc child ->
             match sizing_for_axis child axis with
             | Grow -> acc + 1
             | _ -> acc
@@ -148,8 +148,8 @@ module UI = struct
             remaining_space / grow_child_count, Int.rem remaining_space grow_child_count
         in
 
-        let children =
-          List.folding_map rect.children ~init:0 ~f:(fun grow_index child ->
+        let _, children =
+          List.fold_left_map rect.children ~init:0 ~f:(fun grow_index child ->
             let grow_index, new_span =
               match sizing_for_axis child axis with
               | Grow ->
@@ -211,8 +211,8 @@ module UI = struct
     match node.kind with
     | Text text -> node
     | Container rect ->
-      let children =
-        List.folding_map
+      let _, children =
+        List.fold_left_map
           rect.children
           ~init:(~x:node.x_position, ~y:node.y_position)
           ~f:(fun (~x, ~y) child ->
@@ -227,9 +227,8 @@ module UI = struct
               let x = x + node_outer_span child XAxis in
               (~x, ~y), child
         )
-        |> List.map ~f:(fun child -> calculate_positions child)
       in
-
+      let children = children |> List.map ~f:(fun child -> calculate_positions child) in
       { node with kind = Container { rect with children } }
   ;;
 
@@ -269,7 +268,7 @@ let rec handle_mouse node queue =
     match node.kind, node.id with
     | Container { color; children; on_click = Some msg }, Some id ->
       if is_mouse_button_pressed MouseButton.Left && is_mouse_in_container node then
-        Queue.enqueue queue msg
+        Queue.push queue msg
     | _, _ -> ()
   in
 
@@ -375,7 +374,7 @@ let start ?(window_width = 1200) ?(window_height = 800) ~init ~update ~view () =
     render tree;
 
     let model =
-      match Queue.dequeue event_queue with
+      match Queue.take_opt event_queue with
       | Some msg -> update msg model
       | None -> model
     in
