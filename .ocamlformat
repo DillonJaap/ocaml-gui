@@ -8,10 +8,10 @@ indicate-multiline-delimiters=closing-on-separate-line
 #let-binding-spacing=sparse
 
 # indentation — pinned explicitly (janestreet profile sets these to 2)
-cases-exp-indent = 1
-extension-indent = 1
-function-indent = 1
-let-binding-indent = 1
-module-indent = 1
-stritem-extension-indent = 1
-type-decl-indent = 1
+cases-exp-indent = 2
+extension-indent = 2
+function-indent = 2
+let-binding-indent = 2
+module-indent = 2
+stritem-extension-indent = 2
+type-decl-indent = 2
