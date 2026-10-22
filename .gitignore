@@ -1,3 +1,5 @@
+dune.lock/**/*
+dune.lock/
 _build/
 .merlin
 .opam-switch/
